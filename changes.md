@@ -45,6 +45,15 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Mengubah cek status Pantau di form Identitas Desa dan Penduduk agar tidak melakukan ping eksternal saat tracking dimatikan.
 - Verifikasi: `php -l` bersih untuk file yang diubah, request lokal `/index.php/status_desa` dan `/` berhasil HTTP 200, dan log tidak bertambah error baru.
 
+### Scope dashboard inti Yamansari
+
+- Menambahkan dokumen scope produk `docs/product/yamansari-core-scope.md`.
+- Menambahkan flag `yamansari_core_dashboard = true` untuk mengganti Beranda dari halaman Tentang OpenSID menjadi dashboard internal operasional.
+- Menambahkan flag `yamansari_core_menu_enabled = true` dan whitelist `yamansari_core_menu_slugs` untuk menyaring sidebar admin ke modul inti tahap 1.
+- Mengubah `admin_menu()` agar menu yang sudah di-cache tetap difilter berdasarkan scope Yamansari.
+- Mengubah dashboard Beranda menjadi kelompok kerja: Basis Data Desa, Layanan Warga, Program Desa, Publikasi Website, dan Administrasi Sistem.
+- Modul non-inti seperti Lapak, OpenDK, Anjungan, Buku Tamu, Layanan Pelanggan, dan fitur legacy diparkir dari sidebar tanpa menghapus source.
+
 ### Status Desa / IDM
 
 - Menambahkan flag `status_desa_external_checks` di `donjo-app/config/config.php`.

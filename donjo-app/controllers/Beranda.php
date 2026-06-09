@@ -77,6 +77,7 @@ class Beranda extends Admin_Controller
 
         $data = [
             'rilis'           => $rilis,
+            'coreScopeCards'  => $this->coreScopeCards(),
             'shortcut'        => Shortcut::querys()['data'],
             'saas'            => $saas,
             'notif_langganan' => $notif_langganan,
@@ -89,6 +90,42 @@ class Beranda extends Admin_Controller
     private function shouldLoadExternalDashboardChecks(): bool
     {
         return (bool) config_item('opendesa_service_checks') && (bool) config_item('dashboard_external_checks');
+    }
+
+    private function coreScopeCards(): array
+    {
+        return [
+            'Basis Data Desa' => [
+                ['title' => 'Identitas Desa', 'link' => 'identitas_desa', 'akses' => 'identitas-desa', 'icon' => 'fa-id-card', 'tone' => 'bg-aqua'],
+                ['title' => 'Wilayah', 'link' => 'wilayah', 'akses' => 'wilayah-administratif', 'icon' => 'fa-map', 'tone' => 'bg-green'],
+                ['title' => 'Penduduk', 'link' => 'penduduk', 'akses' => 'penduduk', 'icon' => 'fa-user', 'tone' => 'bg-blue'],
+                ['title' => 'Keluarga', 'link' => 'keluarga', 'akses' => 'keluarga', 'icon' => 'fa-users', 'tone' => 'bg-teal'],
+            ],
+            'Layanan Warga' => [
+                ['title' => 'Cetak Surat', 'link' => 'surat', 'akses' => 'cetak-surat', 'icon' => 'fa-files-o', 'tone' => 'bg-purple'],
+                ['title' => 'Permohonan Surat', 'link' => 'permohonan_surat_admin', 'akses' => 'permohonan-surat', 'icon' => 'fa-inbox', 'tone' => 'bg-orange'],
+                ['title' => 'Arsip Layanan', 'link' => 'keluar', 'akses' => 'arsip-layanan', 'icon' => 'fa-folder-open', 'tone' => 'bg-navy'],
+                ['title' => 'Layanan Mandiri', 'link' => 'mandiri', 'akses' => 'pendaftar-layanan-mandiri', 'icon' => 'fa-mobile', 'tone' => 'bg-maroon'],
+            ],
+            'Program Desa' => [
+                ['title' => 'Bantuan', 'link' => 'program_bantuan', 'akses' => 'bantuan', 'icon' => 'fa-heart', 'tone' => 'bg-red'],
+                ['title' => 'Pembangunan', 'link' => 'admin_pembangunan', 'akses' => 'pembangunan', 'icon' => 'fa-building', 'tone' => 'bg-yellow'],
+                ['title' => 'Pengaduan', 'link' => 'pengaduan_admin', 'akses' => 'pengaduan', 'icon' => 'fa-comments', 'tone' => 'bg-light-blue'],
+                ['title' => 'Peta Desa', 'link' => 'gis', 'akses' => 'peta', 'icon' => 'fa-globe', 'tone' => 'bg-olive'],
+            ],
+            'Publikasi Website' => [
+                ['title' => 'Artikel', 'link' => 'web', 'akses' => 'artikel', 'icon' => 'fa-file-text', 'tone' => 'bg-blue'],
+                ['title' => 'Galeri', 'link' => 'gallery', 'akses' => 'galeri', 'icon' => 'fa-image', 'tone' => 'bg-purple'],
+                ['title' => 'Menu Website', 'link' => 'menu', 'akses' => 'menu', 'icon' => 'fa-bars', 'tone' => 'bg-aqua'],
+                ['title' => 'Tema', 'link' => 'theme', 'akses' => 'tema', 'icon' => 'fa-paint-brush', 'tone' => 'bg-green'],
+            ],
+            'Administrasi Sistem' => [
+                ['title' => 'Pengguna', 'link' => 'man_user', 'akses' => 'pengguna', 'icon' => 'fa-user-circle', 'tone' => 'bg-navy'],
+                ['title' => 'Aplikasi', 'link' => 'setting', 'akses' => 'aplikasi', 'icon' => 'fa-cog', 'tone' => 'bg-teal'],
+                ['title' => 'Database', 'link' => 'database', 'akses' => 'database', 'icon' => 'fa-database', 'tone' => 'bg-orange'],
+                ['title' => 'Info Sistem', 'link' => 'info_sistem', 'akses' => 'info-sistem', 'icon' => 'fa-server', 'tone' => 'bg-gray'],
+            ],
+        ];
     }
 
     private function getUpdate(): array

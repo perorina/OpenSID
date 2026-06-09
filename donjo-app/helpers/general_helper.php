@@ -1141,7 +1141,47 @@ if (! function_exists('admin_menu')) {
     {
         $grupId = ci_auth()->id_grup;
 
-        return cache()->rememberForever("{$grupId}_admin_menu", static fn () => (new Modul())->tree($grupId)->toArray());
+        $menu = cache()->rememberForever("{$grupId}_admin_menu", static fn () => (new Modul())->tree($grupId)->toArray());
+
+        return yamansari_core_menu($menu);
+    }
+}
+
+if (! function_exists('yamansari_core_menu')) {
+    function yamansari_core_menu(array $menu): array
+    {
+        if (! config_item('yamansari_core_menu_enabled')) {
+            return $menu;
+        }
+
+        $allowedSlugs = array_flip(config_item('yamansari_core_menu_slugs') ?: []);
+
+        return collect($menu)
+            ->map(static function (array $item) use ($allowedSlugs): ?array {
+                $children = collect($item['childrens'] ?? [])
+                    ->filter(static fn (array $child): bool => isset($allowedSlugs[$child['slug'] ?? '']))
+                    ->values()
+                    ->toArray();
+
+                $isAllowed = isset($allowedSlugs[$item['slug'] ?? '']);
+
+                if ($children !== []) {
+                    $item['childrens'] = $children;
+
+                    return $item;
+                }
+
+                if ($isAllowed && empty($item['childrens'])) {
+                    $item['childrens'] = [];
+
+                    return $item;
+                }
+
+                return null;
+            })
+            ->filter()
+            ->values()
+            ->toArray();
     }
 }
 
