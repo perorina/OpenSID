@@ -137,3 +137,13 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Memperbarui alur operasional dashboard agar DTKS disebut sebagai bagian dari pengelolaan program desa.
 - Verifikasi: dashboard `/index.php/beranda` menampilkan card dan statistik DTKS, sidebar menampilkan `Satu Data > DTKS`, halaman `/index.php/dtks` HTTP 200 dan menyediakan tombol `Impor` / `Ekspor ke excel`.
 - Catatan: count DTKS saat ini masih 0 karena data Excel asli belum diimpor.
+
+### API backend Yamansari v1
+
+- Menambahkan namespace controller `donjo-app/controllers/yamansari_api` untuk API turunan Yamansari yang terpisah dari `internal_api` bawaan OpenSID.
+- Menambahkan route publik `GET /index.php/api/yamansari/v1` sebagai kontrak awal backend untuk frontend Vite.
+- Endpoint awal yang tersedia: `profil`, `ringkasan`, `artikel`, `pembangunan`, `program-bantuan`, dan `dtks`.
+- Payload dibuat read-only dan ringkas; data warga sensitif seperti NIK/KK tidak diekspos di API publik tahap awal.
+- Menambahkan header CORS terbatas untuk origin development Vite lokal: `localhost/127.0.0.1` pada port `5173`, `5174`, dan `3000`.
+- Catatan arsitektur: frontend Vite nanti sebaiknya membaca data dari API Yamansari ini, bukan mengurai HTML/theme OpenSID lama.
+- Verifikasi: semua endpoint awal HTTP 200 di `127.0.0.1:8081`, ringkasan mengembalikan data dummy Yamansari, dan header CORS lokal muncul untuk origin `http://localhost:5173`.

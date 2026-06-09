@@ -156,6 +156,17 @@ Route::group('external_api', ['namespace' => 'external_api'], static function ()
     });
 });
 
+// API Yamansari untuk frontend Vite dan kanal publik turunan.
+Route::group('api/yamansari/v1', ['namespace' => 'yamansari_api'], static function (): void {
+    Route::get('/', 'V1@index');
+    Route::get('profil', 'V1@profil');
+    Route::get('ringkasan', 'V1@ringkasan');
+    Route::get('artikel', 'V1@artikel');
+    Route::get('pembangunan', 'V1@pembangunan');
+    Route::get('program-bantuan', 'V1@program_bantuan');
+    Route::get('dtks', 'V1@dtks');
+});
+
 // API Publik
 Route::group('', ['namespace' => 'fweb'], static function (): void {
     Route::group('api/v1', static function (): void {
