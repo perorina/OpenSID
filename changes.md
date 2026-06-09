@@ -116,3 +116,15 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
   - `upstream = https://github.com/OpenSID/OpenSID.git`
   - branch acuan: `umum`
 - Catatan penting: folder lokal awalnya berasal dari release extract, bukan clone Git penuh. Karena itu `git status` bisa menampilkan banyak file upstream sebagai deleted/untracked. Commit harus selektif hanya untuk file refactor Yamansari.
+
+### Seeder dummy development Yamansari
+
+- Menambahkan flag `yamansari_dev_dummy_enabled = true` di `donjo-app/config/config.php` untuk mengaktifkan seeder dummy khusus lokal.
+- Menambahkan route development `GET /index.php/dev/yamansari_dummy` yang hanya boleh jalan dari `127.0.0.1` / `::1` dan saat flag dummy aktif.
+- Mengubah `Dev` controller agar tidak lagi bergantung ke `Faker_Controller`, karena dependency Faker di folder `tools/vendor` tidak tersedia pada setup lokal ini.
+- Seeder bersifat idempotent: data dummy lama Yamansari dibersihkan lalu dibuat ulang memakai marker `DUMMY_YAMANSARI`, slug `dummy-yamansari-*`, prefix KK `3328069900`, dan prefix NIK pamong `33280688`.
+- Seeder mengisi data dummy inti untuk tahap development: wilayah, keluarga, penduduk, pamong, permohonan surat, arsip surat, program bantuan, peserta bantuan, pembangunan, kategori, dan artikel.
+- Seeder memakai helper insert adaptif yang membaca kolom tabel lokal (`SHOW COLUMNS`) lalu hanya mengirim field yang ada, supaya aman terhadap variasi schema OpenSID release lokal.
+- Hasil run lokal 2026-06-09: 137 penduduk aktif, 36 keluarga, 36 wilayah, 5 pamong, 8 permohonan baru, 18 surat tercetak, 5 program bantuan, 50 peserta bantuan, 5 pembangunan, dan 6 artikel.
+- Verifikasi: endpoint seeder HTTP 200, dashboard `/index.php/beranda` menampilkan angka non-zero, `php -l` bersih untuk `Dev.php`, `config.php`, dan `Routes/web.php`, serta tidak ada error log baru setelah seeder sukses.
+- Catatan produksi: route dan flag ini hanya untuk development. Jangan aktifkan endpoint dummy di deployment publik/production.

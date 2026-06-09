@@ -142,6 +142,9 @@ Route::get('theme_asset/{theme}', 'Asset@serveTheme');
 Route::get('module_asset/{module}', 'Asset@serveModule');
 Route::get('storage-desa', 'ServeFileController@index')->name('storage.desa');
 
+// Development lokal Yamansari. Controller tetap menolak request selain localhost.
+Route::get('dev/yamansari_dummy', 'Dev@yamansari_dummy')->name('dev.yamansari_dummy');
+
 // Include all routes in folder Web
 foreach (glob(APPPATH . 'Routes/Web/*.php') as $file) {
     require_once $file;

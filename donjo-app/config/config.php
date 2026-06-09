@@ -655,6 +655,7 @@ $config['dashboard_external_checks'] = false;
 $config['status_desa_external_checks'] = true;
 $config['yamansari_core_dashboard'] = true;
 $config['yamansari_core_menu_enabled'] = true;
+$config['yamansari_dev_dummy_enabled'] = true;
 $config['yamansari_core_menu_slugs'] = [
     'beranda',
     'identitas-desa',
