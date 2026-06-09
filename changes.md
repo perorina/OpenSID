@@ -26,6 +26,15 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Alasan: tracker Pantau/OpenDesa melakukan request eksternal saat admin bootstrap dan sempat memicu error schema tabel `notifikasi` pada database lokal.
 - Catatan: perubahan `enable_track = 0` masih DB-only. Untuk fork, sebaiknya dibuat migration/seed/config dev resmi.
 
+### Guard eksternal admin
+
+- Menambahkan flag `admin_external_checks = false` di `donjo-app/config/config.php`.
+- Mengubah `donjo-app/core/MY_Controller.php` agar `Tracker::trackDesa()` hanya berjalan saat `admin_external_checks = true`.
+- Membuka `donjo-app/core/Admin_Controller.php` dari bentuk obfuscated/eval menjadi PHP biasa agar fork lebih mudah dirawat.
+- Mengubah `Admin_Controller` agar `PelangganService::perbaruiLangganan()` dan `PelangganService::statusLangganan()` hanya dipanggil saat `admin_external_checks = true`.
+- Alasan: halaman admin selain Beranda, termasuk `/index.php/status_desa`, masih memanggil layanan eksternal `layanan.opendesa.id` dari constructor dan menghasilkan error `Token not provided`.
+- Verifikasi: reload `/index.php/status_desa` berhasil dan tidak menambah baris error baru di `storage/logs/opensid-2026-06-09.log`.
+
 ### Status Desa / IDM
 
 - Menambahkan flag `status_desa_external_checks` di `donjo-app/config/config.php`.

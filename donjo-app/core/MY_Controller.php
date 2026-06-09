@@ -124,7 +124,10 @@ class MY_Controller extends CI_Controller
 
         SettingAplikasiRepository::applySettingCI($this);
         (new Database())->checkMigration();
-        (new Tracker())->trackDesa();
+
+        if (config_item('admin_external_checks')) {
+            (new Tracker())->trackDesa();
+        }
     }
 
     // Bersihkan session cluster wilayah
