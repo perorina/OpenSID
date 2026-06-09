@@ -147,3 +147,11 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Menambahkan header CORS terbatas untuk origin development Vite lokal: `localhost/127.0.0.1` pada port `5173`, `5174`, dan `3000`.
 - Catatan arsitektur: frontend Vite nanti sebaiknya membaca data dari API Yamansari ini, bukan mengurai HTML/theme OpenSID lama.
 - Verifikasi: semua endpoint awal HTTP 200 di `127.0.0.1:8081`, ringkasan mengembalikan data dummy Yamansari, dan header CORS lokal muncul untuk origin `http://localhost:5173`.
+
+### Optimasi runtime API lokal
+
+- Benchmark ulang API menunjukkan static file lokal hanya sekitar 1-5 ms, sementara endpoint PHP tanpa query DB masih sekitar 200-280 ms sebelum optimasi.
+- Penyebab utama baseline lambat adalah bootstrap/parsing OpenSID/PHP per request, bukan query database murni.
+- Mengaktifkan OPcache dan memperbesar realpath cache pada runtime lokal `tools/opensid-php.ini` untuk development server `127.0.0.1:8081`.
+- Setelah restart server lokal, endpoint ringan turun signifikan: `api/yamansari/v1` dari sekitar 284 ms ke 120 ms, `api/yamansari/v1/ringkasan` dari sekitar 327 ms ke 135 ms, dan halaman root PHP dari sekitar 1,6 detik ke 663 ms.
+- Catatan: `tools/opensid-php.ini` adalah konfigurasi runtime lokal dan tidak ikut commit fork; jika perlu dibakukan, buat template/config dev resmi di luar folder `tools`.
