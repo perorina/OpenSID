@@ -128,3 +128,12 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Hasil run lokal 2026-06-09: 137 penduduk aktif, 36 keluarga, 36 wilayah, 5 pamong, 8 permohonan baru, 18 surat tercetak, 5 program bantuan, 50 peserta bantuan, 5 pembangunan, dan 6 artikel.
 - Verifikasi: endpoint seeder HTTP 200, dashboard `/index.php/beranda` menampilkan angka non-zero, `php -l` bersih untuk `Dev.php`, `config.php`, dan `Routes/web.php`, serta tidak ada error log baru setelah seeder sukses.
 - Catatan produksi: route dan flag ini hanya untuk development. Jangan aktifkan endpoint dummy di deployment publik/production.
+
+### Aktivasi Satu Data/DTKS
+
+- Mengaktifkan parent menu `satu-data` dan child menu `dtks` di whitelist `yamansari_core_menu_slugs`.
+- Memindahkan `Satu Data/DTKS` dari daftar fitur parkir ke fitur inti kelompok `Program Desa` pada dashboard internal Yamansari.
+- Menambahkan statistik ringkasan `DTKS` yang menghitung tabel `dtks` dan memakai konteks `siap impor Excel`.
+- Memperbarui alur operasional dashboard agar DTKS disebut sebagai bagian dari pengelolaan program desa.
+- Verifikasi: dashboard `/index.php/beranda` menampilkan card dan statistik DTKS, sidebar menampilkan `Satu Data > DTKS`, halaman `/index.php/dtks` HTTP 200 dan menyediakan tombol `Impor` / `Ekspor ke excel`.
+- Catatan: count DTKS saat ini masih 0 karena data Excel asli belum diimpor.

@@ -114,6 +114,7 @@ class Beranda extends Admin_Controller
             ],
             'Program Desa' => [
                 ['title' => 'Bantuan', 'link' => 'program_bantuan', 'akses' => 'bantuan', 'icon' => 'fa-heart', 'summary' => 'Program bantuan, sasaran, peserta, dan periode penyaluran.', 'output' => 'Penerima jelas'],
+                ['title' => 'Satu Data/DTKS', 'link' => 'dtks', 'akses' => 'dtks', 'icon' => 'fa-table', 'summary' => 'Basis data sosial warga dari DTKS/Regsosek dan impor Excel.', 'output' => 'Data sosial siap impor'],
                 ['title' => 'Pembangunan', 'link' => 'admin_pembangunan', 'akses' => 'pembangunan', 'icon' => 'fa-building', 'summary' => 'Kegiatan pembangunan, lokasi, anggaran, progres, dan dokumentasi.', 'output' => 'Proyek terpantau'],
                 ['title' => 'Pengaduan', 'link' => 'pengaduan_admin', 'akses' => 'pengaduan', 'icon' => 'fa-comments', 'summary' => 'Masukan warga yang perlu dicatat, dijawab, dan ditindaklanjuti.', 'output' => 'Aduan tertangani'],
                 ['title' => 'Peta Desa', 'link' => 'gis', 'akses' => 'peta', 'icon' => 'fa-globe', 'summary' => 'Lokasi fasilitas, wilayah, keluarga, dan titik penting desa.', 'output' => 'Peta operasional'],
@@ -142,6 +143,7 @@ class Beranda extends Admin_Controller
             ['label' => 'Permohonan baru', 'count' => $this->countRows('permohonan_surat', ['status' => 1]), 'link' => 'permohonan_surat_admin', 'akses' => 'permohonan-surat', 'icon' => 'fa-inbox', 'context' => 'perlu diperiksa'],
             ['label' => 'Surat tercetak', 'count' => $this->countRows('log_surat', ['status' => 1]), 'link' => 'keluar', 'akses' => 'arsip-layanan', 'icon' => 'fa-file-text-o', 'context' => 'arsip layanan'],
             ['label' => 'Program bantuan', 'count' => $this->countRows('program'), 'link' => 'program_bantuan', 'akses' => 'bantuan', 'icon' => 'fa-heart', 'context' => 'program tercatat'],
+            ['label' => 'DTKS', 'count' => $this->countRows('dtks'), 'link' => 'dtks', 'akses' => 'dtks', 'icon' => 'fa-table', 'context' => 'siap impor Excel'],
             ['label' => 'Pembangunan', 'count' => $this->countRows('pembangunan'), 'link' => 'admin_pembangunan', 'akses' => 'pembangunan', 'icon' => 'fa-building', 'context' => 'kegiatan desa'],
             ['label' => 'Artikel publik', 'count' => $this->countRows('artikel'), 'link' => 'web', 'akses' => 'artikel', 'icon' => 'fa-newspaper-o', 'context' => 'konten website'],
         ];
@@ -152,7 +154,7 @@ class Beranda extends Admin_Controller
         return [
             ['title' => 'Validasi data dasar', 'body' => 'Identitas, wilayah, penduduk, keluarga, dan pamong desa.', 'icon' => 'fa-check-square-o'],
             ['title' => 'Layani kebutuhan warga', 'body' => 'Permohonan, cetak surat, arsip, dan akses mandiri warga.', 'icon' => 'fa-handshake-o'],
-            ['title' => 'Kelola program desa', 'body' => 'Bantuan, pembangunan, pengaduan, peta, dan transparansi.', 'icon' => 'fa-line-chart'],
+            ['title' => 'Kelola program desa', 'body' => 'Bantuan, DTKS, pembangunan, pengaduan, peta, dan transparansi.', 'icon' => 'fa-line-chart'],
             ['title' => 'Publikasikan informasi', 'body' => 'Artikel, galeri, menu website, tema, dan kanal publik.', 'icon' => 'fa-bullhorn'],
         ];
     }
@@ -166,7 +168,6 @@ class Beranda extends Admin_Controller
             'Buku Tamu',
             'Kehadiran',
             'Kesehatan Covid',
-            'Satu Data/DTKS',
             'Layanan Pelanggan OpenDesa',
         ];
     }

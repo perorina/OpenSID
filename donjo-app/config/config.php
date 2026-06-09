@@ -673,6 +673,8 @@ $config['yamansari_core_menu_slugs'] = [
     'laporan-bulanan',
     'laporan-kelompok-rentan',
     'laporan-penduduk',
+    'satu-data',
+    'dtks',
     'pengaturan-surat',
     'cetak-surat',
     'permohonan-surat',
