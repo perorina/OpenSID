@@ -54,6 +54,14 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 - Mengubah dashboard Beranda menjadi kelompok kerja: Basis Data Desa, Layanan Warga, Program Desa, Publikasi Website, dan Administrasi Sistem.
 - Modul non-inti seperti Lapak, OpenDK, Anjungan, Buku Tamu, Layanan Pelanggan, dan fitur legacy diparkir dari sidebar tanpa menghapus source.
 
+### Dashboard internal operasional
+
+- Mengubah Beranda inti menjadi ruang kerja internal Yamansari dengan ringkasan data, alur operasional, fitur inti tahap 1, dan daftar fitur yang sengaja diparkir.
+- Beranda mode inti tidak lagi memanggil `Shortcut::querys()` karena query tersebut menghitung banyak modul OpenSID lintas scope dan membuat halaman pertama setelah login membawa beban fitur non-inti.
+- Menambahkan ringkasan ringan dari tabel inti: penduduk aktif, keluarga, wilayah, permohonan surat baru, arsip surat, program bantuan, pembangunan, dan artikel publik.
+- Menambahkan penjelasan output tiap modul inti agar scope tidak sekadar daftar menu, melainkan alur kerja yang punya hasil jelas.
+- Memperbarui `docs/product/yamansari-core-scope.md` dengan struktur dashboard internal dan alasan performa.
+
 ### Status Desa / IDM
 
 - Menambahkan flag `status_desa_external_checks` di `donjo-app/config/config.php`.

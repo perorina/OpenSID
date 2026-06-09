@@ -80,3 +80,14 @@ Dokumen ini mencatat scope awal turunan OpenSID untuk Desa Yamansari. Tujuannya 
 - `yamansari_core_menu_enabled = true` menyaring sidebar admin berdasarkan whitelist slug.
 - `yamansari_core_menu_slugs` menyimpan daftar modul yang tampil di sidebar tahap 1.
 - Modul non-inti masih ada di source dan route, tetapi tidak muncul sebagai pilihan utama operator.
+
+## Dashboard internal
+
+Dashboard tahap 1 diposisikan sebagai ruang kerja internal, bukan halaman promosi atau halaman tentang aplikasi. Susunannya:
+
+- Ringkasan inti: penduduk aktif, keluarga, wilayah, permohonan surat, arsip surat, bantuan, pembangunan, dan artikel publik.
+- Alur operasional: validasi data dasar, layanan warga, program desa, dan publikasi informasi.
+- Fitur inti tahap 1: modul yang dipakai langsung oleh operator desa.
+- Diparkir dulu: modul yang masih ada di source tetapi tidak ditampilkan sebagai pekerjaan utama.
+
+Dashboard inti tidak lagi memanggil `Shortcut::querys()` karena fungsi itu menghitung banyak modul lintas fitur. Ringkasan memakai hitungan ringan langsung ke tabel inti agar halaman pertama setelah login tidak ikut membawa beban fitur yang diparkir.
