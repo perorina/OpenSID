@@ -36,16 +36,19 @@
  */
 
 use App\Models\User;
-use App\Rules\CaptchaRule;
 use App\Rules\SecretCodeRule;
 use App\Services\Auth\Traits\LoginRequest;
 use App\Services\OtpService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
-class AuthenticatedSessionController extends MY_Controller
+require_once APPPATH . 'core/Auth_Controller.php';
+
+class AuthenticatedSessionController extends Auth_Controller
 {
     use LoginRequest;
 
@@ -57,17 +60,13 @@ class AuthenticatedSessionController extends MY_Controller
         parent::__construct();
 
         $this->latar_login = default_file(LATAR_LOGIN . setting('latar_login'), DEFAULT_LATAR_SITEMAN);
-        $this->header      = collect(identitas())->toArray();
 
-        $this->otpService = new OtpService();
 
         view()->share('list_setting', $this->list_setting);
     }
 
     public function create()
     {
-        $this->handleCaptchaSession();
-
         if (auth('admin_periksa')->check()) {
             auth('admin')->logout();
             auth('admin_periksa')->logout();
@@ -154,7 +153,7 @@ class AuthenticatedSessionController extends MY_Controller
         }
 
         // Generate and send OTP
-        $result = $this->otpService->generateAndSend(
+        $result = $this->otpService()->generateAndSend(
             $user,
             $user->otp_channel,
             $user->otp_identifier,
@@ -226,7 +225,7 @@ class AuthenticatedSessionController extends MY_Controller
         }
 
         // Verify OTP
-        $result = $this->otpService->verify($user, $request['otp'], 'login');
+        $result = $this->otpService()->verify($user, $request['otp'], 'login');
 
         if (! $result['success']) {
             // Jika gagal karena maksimal percobaan, hapus sesi aktivasi
@@ -262,7 +261,7 @@ class AuthenticatedSessionController extends MY_Controller
 
         $purpose = $request['purpose'] ?? 'login'; // default to 'login'
 
-        $result = $this->otpService->resend($purpose, $this->session);
+        $result = $this->otpService()->resend($purpose, $this->session);
 
         if ($result['success']) {
             return json(['success' => true, 'message' => $result['message']]);
@@ -273,6 +272,14 @@ class AuthenticatedSessionController extends MY_Controller
 
     public function store()
     {
+        if ($this->loginGuardFilled()) {
+            RateLimiter::hit($this->throttleKey(), config_item('lockout_time'));
+
+            return $this->invalid(request(), ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]));
+        }
+
         $isDemoMode      = config_item('demo_mode');
         $demoUser        = config_item('demo_user');
         $requestUsername = request('username');
@@ -315,14 +322,26 @@ class AuthenticatedSessionController extends MY_Controller
 
     public function matikanCaptcha()
     {
-        $this->session->set_userdata('recaptcha', true);
-
-        return json('Captcha dinonaktifkan');
+        return json('Captcha admin tidak digunakan');
     }
 
     protected function syaratSandi($password)
     {
         return (bool) (preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,20}$/', $password));
+    }
+
+    private function loginGuardFilled(): bool
+    {
+        return trim((string) request('login_guard')) !== '';
+    }
+
+    private function otpService(): OtpService
+    {
+        if (! $this->otpService) {
+            $this->otpService = new OtpService();
+        }
+
+        return $this->otpService;
     }
 
     protected function rules()
@@ -333,20 +352,10 @@ class AuthenticatedSessionController extends MY_Controller
             'password' => ['required', 'string'],
         ];
 
-        if (app()->isProduction() && $this->shouldUseCaptcha()) {
-            $rules['g-recaptcha-response'] = ['required', 'captcha'];
-            $this->session->unset_userdata('recaptcha');
-        } elseif (app()->isProduction()) {
-            $rules['captcha_code'] = ['required', new CaptchaRule()];
-        }
-
         if ($secretCode) {
             $username             = request('username');
             $passwordDatabase     = User::where('username', $username)->first()->password ?? '';
             $rules['secret_code'] = ['required', 'string', 'min:10', new SecretCodeRule($passwordDatabase)];
-
-            // CAPTCHA tidak dibutuhkan jika pakai secret code
-            unset($rules['g-recaptcha-response'], $rules['captcha_code']);
         }
 
         return $rules;
@@ -355,18 +364,6 @@ class AuthenticatedSessionController extends MY_Controller
     protected function throttleKey()
     {
         return Str::transliterate(Str::lower(request('username')) . '|' . request()->ip());
-    }
-
-    private function handleCaptchaSession()
-    {
-        if ($this->session->userdata('recaptcha')) {
-            setting('google_recaptcha', 0);
-        }
-    }
-
-    private function shouldUseCaptcha()
-    {
-        return setting('google_recaptcha') && ! $this->session->userdata('recaptcha');
     }
 
     private function startTwoFactorAuthProcess(User $user)

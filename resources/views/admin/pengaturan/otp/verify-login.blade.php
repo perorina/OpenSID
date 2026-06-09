@@ -1,5 +1,14 @@
 @extends('admin.auth.index')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('js/sweetalert2/sweetalert2.min.css') }}">
+@endpush
+
+@push('vendor-js')
+    <script src="{{ asset('bootstrap/js/jquery.min.js') }}"></script>
+    <script src="{{ asset('js/sweetalert2/sweetalert2.all.min.js') }}"></script>
+@endpush
+
 @section('content')
         <div class="callout callout-info" style="margin-bottom: 15px;">
             <p style="margin: 0; font-size: 12px;">
@@ -17,6 +26,8 @@
         </div>
 
         <form id="validasi" class="login-form" action="{{ $form_action }}" method="POST">
+            @include('admin.auth._csrf')
+
             <div class="form-group text-center">
                 <div class="otp-container">
                     <input type="text" class="form-control otp-input" maxlength="1" data-index="0">

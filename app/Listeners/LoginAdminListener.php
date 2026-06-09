@@ -77,7 +77,7 @@ class LoginAdminListener
         $login->user->save();
 
         $ip    = $this->app['ci']->input->ip_address();
-        $geoip = geoip_info($ip);
+        $geoip = $this->shouldLookupGeoip($ip) ? geoip_info($ip) : null;
 
         if (Schema::hasTable('log_activity')) {
             activity()
@@ -96,9 +96,9 @@ class LoginAdminListener
         // TODO: gunakan laravel notification
         if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
             $telegram = new Telegram(setting('telegram_token'));
-            $country  = $geoip['country'] ?? ' tidak diketahui';
+            $country  = $geoip['country'] ?? null;
 
-            if ($country != 'Indonesia') {
+            if ($country && $country != 'Indonesia') {
                 try {
                     $telegram->sendMessage([
                         'text' => <<<EOD
@@ -122,6 +122,11 @@ class LoginAdminListener
                 log_message('error', $e->getMessage());
             }
         }
+    }
+
+    private function shouldLookupGeoip(string $ip): bool
+    {
+        return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     private function setFmKey($key = null): string

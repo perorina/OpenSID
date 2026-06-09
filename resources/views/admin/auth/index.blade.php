@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ asset('css/login-style.css') }}" media="screen">
     <link rel="stylesheet" href="{{ asset('css/login-form-elements.css') }}" media="screen">
     <link rel="stylesheet" href="{{ asset('bootstrap/css/bootstrap.bar.css') }}" media="screen">
-    <link rel="stylesheet" href="{{ asset('js/sweetalert2/sweetalert2.min.css') }}">
+    @stack('css')
     @if (is_file('desa/pengaturan/siteman/siteman.css'))
         <link rel='stylesheet' href="{{ base_url('desa/pengaturan/siteman/siteman.css') }}">
     @endif
@@ -19,12 +19,6 @@
             background-image: url('{{ $latar_login }}');
         }
     </style>
-    <script src="{{ asset('bootstrap/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('js/jquery.validate.min.js') }}"></script>
-    <script src="{{ asset('js/validasi.js') }}"></script>
-    <script src="{{ asset('js/localization/messages_id.js') }}"></script>
-    <script src="{{ asset('js/sweetalert2/sweetalert2.all.min.js') }}"></script>
-    @include('admin.layouts.components.token')
 </head>
 
 <body class="login">
@@ -77,6 +71,7 @@
         </div>
     </div>
 
+    @stack('vendor-js')
     @stack('js')
 
 </body>

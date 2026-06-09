@@ -68,27 +68,38 @@ class ViewServiceProvider extends ServiceProvider
 
     protected function bootShareViewData(): void
     {
-        if (! $this->app['ci']->session->instalasi) {
+        $ci = $this->app['ci'];
+
+        if (! $ci->session->instalasi) {
             try {
-                $desa = identitas();
+                $desa = $this->resolveDesaForView($ci);
             } catch (Exception) {
             }
         }
 
-        if ($this->app['ci']->session->db_error['code'] === 1049) {
-            $this->app['ci']->session->error_db = null;
-            $this->app['ci']->session->unset_userdata(['db_error', 'message', 'heading', 'message_query', 'message_exception', 'sudah_mulai']);
+        if ($ci->session->db_error['code'] === 1049) {
+            $ci->session->error_db = null;
+            $ci->session->unset_userdata(['db_error', 'message', 'heading', 'message_query', 'message_exception', 'sudah_mulai']);
         } else {
             View::share([
-                'errors'      => $this->app['ci']->session->errors ?: new ViewErrorBag(),
-                'ci'          => $this->app['ci'],
+                'errors'      => $ci->session->errors ?: new ViewErrorBag(),
+                'ci'          => $ci,
                 'desa'        => $desa ?? null,
-                'auth'        => $this->app['ci']->session->isAdmin,
-                'session'     => $this->app['ci']->session,
-                'token_name'  => $this->app['ci']->security->get_csrf_token_name(),
-                'token_value' => $this->app['ci']->security->get_csrf_hash(),
+                'auth'        => $ci->session->isAdmin,
+                'session'     => $ci->session,
+                'token_name'  => $ci->security->get_csrf_token_name(),
+                'token_value' => $ci->security->get_csrf_hash(),
             ]);
         }
+    }
+
+    private function resolveDesaForView($ci): object|null
+    {
+        if (class_exists(\Auth_Controller::class, false) && $ci instanceof \Auth_Controller && ! empty($ci->header)) {
+            return (object) $ci->header;
+        }
+
+        return identitas();
     }
 
     protected function bootHideSensitiveSetting()

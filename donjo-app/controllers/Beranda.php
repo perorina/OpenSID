@@ -57,25 +57,38 @@ class Beranda extends Admin_Controller
 
     public function index()
     {
-        get_pesan_opendk(); // ambil pesan baru di opendk
-
-        $notif_langganan = PelangganService::statusLangganan();
+        $rilis           = [];
+        $notif_langganan = null;
         $notif_percobaan = null;
+        $saas            = collect();
 
-        // hanya cek percobaan kalau premium kosong
-        if (empty($notif_langganan)) {
-            $notif_percobaan = PelangganService::statusPercobaan();
+        if ($this->shouldLoadExternalDashboardChecks()) {
+            get_pesan_opendk();
+
+            $notif_langganan = PelangganService::statusLangganan();
+
+            if (empty($notif_langganan)) {
+                $notif_percobaan = PelangganService::statusPercobaan();
+            }
+
+            $rilis = $this->getUpdate();
+            $saas  = Saas::peringatan();
         }
 
         $data = [
-            'rilis'           => $this->getUpdate(),
+            'rilis'           => $rilis,
             'shortcut'        => Shortcut::querys()['data'],
-            'saas'            => Saas::peringatan(),
+            'saas'            => $saas,
             'notif_langganan' => $notif_langganan,
             'notif_percobaan' => $notif_percobaan,
         ];
 
         return view('admin.home.index', $data);
+    }
+
+    private function shouldLoadExternalDashboardChecks(): bool
+    {
+        return (bool) config_item('dashboard_external_checks');
     }
 
     private function getUpdate(): array

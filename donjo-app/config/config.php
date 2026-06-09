@@ -648,6 +648,8 @@ $config['server_layanan'] = 'https://layanan.opendesa.id';
 */
 $config['rilis_umum']    = 'https://api.github.com/repos/opensid/opensid/releases/latest';
 $config['rilis_premium'] = 'https://api.github.com/repos/opensid/rilis-premium/releases/latest';
+$config['dashboard_external_checks'] = false;
+$config['status_desa_external_checks'] = true;
 
 /*
 |--------------------------------------------------------------------------

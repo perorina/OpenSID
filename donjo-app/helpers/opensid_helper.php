@@ -1362,6 +1362,10 @@ function getSizeDB()
 function idm($kode_desa, $tahun)
 {
     $ci         = &get_instance();
+    if (! config_item('status_desa_external_checks')) {
+        return idm_lokal_dummy($kode_desa, $tahun);
+    }
+
     $cache      = "idm_{$tahun}_{$kode_desa}.json";
     $cache_path = DESAPATH . "/cache/{$cache}";
 
@@ -1411,6 +1415,60 @@ function idm($kode_desa, $tahun)
     $pesan_error .= '<a href="' . $url . '" target="_blank">' . $url . '</a>';
 
     return (object) ['error_msg' => $pesan_error];
+}
+
+function idm_lokal_dummy($kode_desa, $tahun)
+{
+    $desa = identitas();
+    $ambilIdentitas = static function (string $key, string $default = '-') use ($desa): string {
+        $nilai = is_array($desa) ? ($desa[$key] ?? null) : ($desa->{$key} ?? null);
+
+        return empty($nilai) ? $default : (string) $nilai;
+    };
+
+    $indikator = [];
+
+    for ($i = 0; $i <= 52; $i++) {
+        $indikator[] = (object) [
+            'NO'         => (string) ($i + 1),
+            'INDIKATOR'  => 'Indikator IDM lokal ' . ($i + 1),
+            'SKOR'       => 0,
+            'KETERANGAN' => 'Belum diisi',
+            'KEGIATAN'   => 'Lengkapi data IDM produksi ketika integrasi sudah aktif.',
+            'NILAI'      => 0,
+            'PUSAT'      => '-',
+            'PROV'       => '-',
+            'KAB'        => '-',
+            'DESA'       => '-',
+            'CSR'        => '-',
+            'LAINNYA'    => '-',
+        ];
+    }
+
+    $indikator[35]->INDIKATOR = 'Indeks Ketahanan Sosial (IKS)';
+    $indikator[48]->INDIKATOR = 'Indeks Ketahanan Ekonomi (IKE)';
+    $indikator[52]->INDIKATOR = 'Indeks Ketahanan Lingkungan (IKL)';
+
+    return (object) [
+        'error_msg' => null,
+        'SUMMARIES' => (object) [
+            'SKOR_SAAT_INI' => 0,
+            'STATUS'        => 'LOKAL',
+            'SKOR_MINIMAL'  => 0,
+            'TARGET_STATUS' => 'LENGKAPI IDM',
+        ],
+        'IDENTITAS' => [
+            (object) [
+                'kode_desa'      => (string) $kode_desa,
+                'tahun'          => (int) $tahun,
+                'nama_provinsi'  => $ambilIdentitas('nama_propinsi'),
+                'nama_kab_kota'  => $ambilIdentitas('nama_kabupaten'),
+                'nama_kecamatan' => $ambilIdentitas('nama_kecamatan'),
+                'nama_desa'      => $ambilIdentitas('nama_desa', 'Yamansari'),
+            ],
+        ],
+        'ROW' => $indikator,
+    ];
 }
 
 function sdgs()

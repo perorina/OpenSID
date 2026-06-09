@@ -61,6 +61,11 @@ class Status_desa extends Admin_Controller
 
     public function perbarui_idm(int $tahun): void
     {
+        if (! config_item('status_desa_external_checks')) {
+            set_session('tahun', $tahun);
+            redirect_with('success', 'Mode lokal: pembaruan IDM eksternal dimatikan. Data placeholder ditampilkan.');
+        }
+
         if (cek_koneksi_internet() && $tahun) {
             $kode_desa = identitas('kode_desa');
             $cache     = 'idm_' . $tahun . '_' . $kode_desa . '.json';
@@ -80,7 +85,8 @@ class Status_desa extends Admin_Controller
                 redirect_with('error', 'Tidak dapat mengambil data IDM, silakan coba lagi.');
             }
 
-            if ($response?->getStatusCode() === 200 && ($response->getBody()->getContents() !== '' && $response->getBody()->getContents() !== '0')) {
+            $body = $response?->getBody()->getContents();
+            if ($response?->getStatusCode() === 200 && ($body !== '' && $body !== '0')) {
                 $this->cache->file->delete($cache);
                 set_session('tahun', $tahun);
 

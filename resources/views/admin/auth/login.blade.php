@@ -3,11 +3,12 @@
 @php
     preg_match('/(\d+)/', $errors?->first('email'), $matches);
     $second = $matches[0] ?? 0;
-    $isProduction = app()->isProduction();
 @endphp
 
 @section('content')
     <form id="validasi" class="login-form" action="{{ $form_action }}" method="post">
+        @include('admin.auth._csrf')
+
         <div class="form-group">
             <input
                 name="username"
@@ -32,26 +33,9 @@
             >
         </div>
 
-        @if ($isProduction && setting('google_recaptcha'))
-            {!! app('captcha')->display() !!}
-        @elseif ($isProduction)
-            <div class="form-group">
-                <a href="#" id="b-captcha" onclick="event.preventDefault(); document.getElementById('captcha').src = '{{ site_url('captcha') }}?' + Math.random();" style="color: #000000;">
-                    <img id="captcha" src="{{ site_url('captcha') }}" alt="CAPTCHA Image" />
-                </a>
-            </div>
-            <div class="form-group captcha">
-                <input
-                    name="captcha_code"
-                    type="text"
-                    class="form-control required"
-                    maxlength="6"
-                    placeholder="Masukkan kode di atas"
-                    @disabled($second)
-                    autocomplete="off"
-                />
-            </div>
-        @endif
+        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+            <input name="login_guard" type="text" tabindex="-1" autocomplete="off" value="">
+        </div>
 
         <div class="form-group">
             <input @disabled($second) type="checkbox" id="checkbox" class="form-checkbox">
@@ -71,32 +55,6 @@
 @endsection
 
 @push('js')
-    @if ($isProduction && setting('google_recaptcha'))
-        {!! app('captcha')->renderJs('id', true, 'recaptchaCallback') !!}
-
-        <script>
-            var recaptchaCallback = function() {
-                grecaptcha.render(document.querySelector('.g-recaptcha'), {
-                    'sitekey': '{{ $list_setting->firstWhere('key', 'google_recaptcha_site_key')?->value }}',
-                    'error-callback': function() {
-                        $.ajax({
-                            url: '{{ site_url('siteman/matikan-captcha') }}',
-                            type: 'post',
-                            success: function(response) {
-                                // Redirect to the 'siteman' URL after disabling captcha
-                                window.location.href = '{{ site_url('siteman') }}';
-                            },
-                            error: function(xhr, status, error) {
-                                // Log the error for debugging
-                                console.error('Error in captcha disabling request:', error);
-                            }
-                        });
-                    }
-                });
-            }
-        </script>
-    @endif
-
     <script>
         function start_countdown() {
             let totalSeconds = {{ $second }};
@@ -114,16 +72,15 @@
             }, 1000);
         }
 
-        $(document).ready(function() {
-            var pass = $("#password");
-            $('#checkbox').click(function() {
-                if (pass.attr('type') === "password") {
-                    pass.attr('type', 'text');
-                } else {
-                    pass.attr('type', 'password')
-                }
+        document.addEventListener('DOMContentLoaded', function() {
+            const pass = document.getElementById('password');
+            const checkbox = document.getElementById('checkbox');
+
+            checkbox.addEventListener('change', function() {
+                pass.type = checkbox.checked ? 'text' : 'password';
             });
-            if ($('#countdown').length) {
+
+            if (document.getElementById('countdown')) {
                 start_countdown();
             }
 

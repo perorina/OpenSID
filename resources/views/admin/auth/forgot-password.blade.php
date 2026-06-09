@@ -12,6 +12,8 @@
         </div>
     @else
         <form id="validasi" class="login-form mt-4" action="<?= site_url('siteman/kirim_lupa_sandi') ?>" method="post">
+            @include('admin.auth._csrf')
+
             <div class="form-group">
                 <input name="email" type="text" placeholder="Email Pengguna" class="form-control required">
             </div>
@@ -40,6 +42,10 @@
         </form>
     @endif
 @endsection
+
+@push('vendor-js')
+    <script src="{{ asset('bootstrap/js/jquery.min.js') }}"></script>
+@endpush
 
 @push('js')
     <script>

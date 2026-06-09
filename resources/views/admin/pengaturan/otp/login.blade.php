@@ -9,6 +9,8 @@
         </div>
 
         <form id="validasi" class="login-form" action="{{ $form_action }}" method="POST">
+            @include('admin.auth._csrf')
+
             <div class="form-group">
                 <input
                     id="identifier"

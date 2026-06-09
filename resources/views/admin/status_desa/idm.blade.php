@@ -22,6 +22,12 @@
     </style>
 @endpush
 
+@php
+    $idmErrorMsg = $idm->error_msg ?? null;
+    $idmExternalChecks = (bool) config_item('status_desa_external_checks');
+    $idmRefreshDisabled = ! $idmExternalChecks || cek_koneksi_internet() == false || $idmErrorMsg === 'Periksa koneksi internet Anda.';
+@endphp
+
 @section('title')
     <h1>
         Status IDM Desa
@@ -49,17 +55,17 @@
                 @endforeach
             </select>
             @if (can('u'))
-                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Perbarui" {!! cek_koneksi_internet() == false || $idm->error_msg === 'Periksa koneksi internet Anda.' ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'href="' . ci_route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
-                @if (empty($idm->error_msg))
+                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block {{ $idmRefreshDisabled ? 'disabled' : '' }}" {!! $idmRefreshDisabled ? 'disabled aria-disabled="true" title="Mode lokal IDM aktif"' : 'title="Perbarui" href="' . ci_route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
+                @if (empty($idmErrorMsg))
                     <a class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Simpan" href="{{ ci_route('status_desa.simpan', $tahun) }}"><i class="fa fa-check-circle"></i>Simpan</a>
                 @endif
             @endif
             </form>
         </div>
         <div class="box-body">
-            @if ($idm->error_msg)
+            @if ($idmErrorMsg)
                 <div class="alert alert-danger">
-                    {!! $idm->error_msg !!}
+                    {!! $idmErrorMsg !!}
                 </div>
             @else
                 <div class="row">
@@ -203,7 +209,7 @@
 
 @endsection
 
-@if (!$idm->error_msg)
+@if (!$idmErrorMsg)
     @push('scripts')
         @include('admin.layouts.components.asset_highcharts')
         <script>

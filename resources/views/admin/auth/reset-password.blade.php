@@ -2,6 +2,8 @@
 
 @section('content')
     <form id="validasi" class="login-form" action="<?= site_url('siteman/verifikasi_sandi') ?>" method="post">
+        @include('admin.auth._csrf')
+
         <div class="form-group">
             <input name="email" type="text" placeholder="Email Pengguna" value="<?= $email ?>" class="form-control required" readonly>
             <input type="hidden" name="email" value="<?= $email ?>">

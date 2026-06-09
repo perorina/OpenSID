@@ -2,6 +2,8 @@
 
 @section('content')
     <form id="validasi" class="login-form" action="{{ $form_action }}" method="post">
+        @include('admin.auth._csrf')
+
         <div class="form-group">
             <input
                 name="oneTimePassword"
