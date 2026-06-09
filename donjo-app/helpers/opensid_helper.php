@@ -261,6 +261,10 @@ function session_success(): void
 // Untuk mengirim data ke OpenSID tracker
 function httpPost($url, $params): ?string
 {
+    if (! config_item('opensid_tracking_enabled')) {
+        return null;
+    }
+
     try {
         $response = (new Client())->post($url, [
             'headers' => [
@@ -291,6 +295,10 @@ function httpPost($url, $params): ?string
  */
 function get_data_desa(string $kode_desa)
 {
+    if (! config_item('opensid_tracking_enabled')) {
+        return null;
+    }
+
     try {
         $response = (new Client())->get(config_item('server_pantau') . '/index.php/api/wilayah/kodedesa?kode=' . $kode_desa, [
             'headers' => [
@@ -514,6 +522,17 @@ if (! function_exists('max_upload')) {
 
 function getKodeDesaFromTrackSID()
 {
+    if (! config_item('opensid_tracking_enabled')) {
+        $config = identitas();
+
+        return [
+            'nama_prov' => $config->nama_propinsi ?? null,
+            'nama_kab'  => $config->nama_kabupaten ?? null,
+            'nama_kec'  => $config->nama_kecamatan ?? null,
+            'nama_desa' => $config->nama_desa ?? null,
+        ];
+    }
+
     if (session('trackSID_bps_code') && session('trackSID_bps_code') != null) {
         return session('trackSID_bps_code');
     }

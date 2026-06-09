@@ -125,7 +125,7 @@ class MY_Controller extends CI_Controller
         SettingAplikasiRepository::applySettingCI($this);
         (new Database())->checkMigration();
 
-        if (config_item('admin_external_checks')) {
+        if (config_item('opensid_tracking_enabled')) {
             (new Tracker())->trackDesa();
         }
     }

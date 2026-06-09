@@ -59,7 +59,7 @@ class Tracker
 {
     public function trackDesa(): void
     {
-        if (setting('enable_track') == false || null === identitas()) {
+        if (! config_item('opensid_tracking_enabled') || setting('enable_track') == false || null === identitas()) {
             return;
         }
         // Track web dan admin masing2 maksimum sekali sehari
@@ -76,6 +76,10 @@ class Tracker
 
     public function kirimData(): void
     {
+        if (! config_item('opensid_tracking_enabled')) {
+            return;
+        }
+
         /**
          * Jangan kirim data ke pantau jika versi demo
          * cegah error karena tabel belum ada

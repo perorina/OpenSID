@@ -191,7 +191,11 @@ class Web_Controller extends MY_Controller
             $data = app('ci')->cache->file->get('status_langganan');
 
             // safety check kalau data kosong
-            if (empty($data->body->pemesanan)) {
+            if (empty($data?->body?->pemesanan)) {
+                if (! config_item('opendesa_service_checks')) {
+                    return [];
+                }
+
                 app('ci')->header['desa']                 = collect(identitas())->toArray();
                 app('ci')->header['perbaharui_langganan'] = true;
                 PelangganService::perbaruiLangganan();

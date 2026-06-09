@@ -517,7 +517,7 @@ if (! function_exists('case_replace')) {
 if (! function_exists('kirim_versi_opensid')) {
     function kirim_versi_opensid($kode_desa): void
     {
-        if (! config_item('demo_mode') && ! empty($kode_desa) && ENVIRONMENT === 'production') {
+        if (config_item('opensid_tracking_enabled') && ! config_item('demo_mode') && ! empty($kode_desa) && ENVIRONMENT === 'production') {
             $ci = get_instance();
             $ci->load->driver('cache');
 

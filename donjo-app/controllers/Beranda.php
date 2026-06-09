@@ -88,7 +88,7 @@ class Beranda extends Admin_Controller
 
     private function shouldLoadExternalDashboardChecks(): bool
     {
-        return (bool) config_item('dashboard_external_checks');
+        return (bool) config_item('opendesa_service_checks') && (bool) config_item('dashboard_external_checks');
     }
 
     private function getUpdate(): array

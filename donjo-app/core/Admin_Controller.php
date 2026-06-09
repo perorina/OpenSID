@@ -225,7 +225,7 @@ class Admin_Controller extends MY_Controller
 
     private function shouldLoadExternalAdminChecks(): bool
     {
-        return (bool) config_item('admin_external_checks');
+        return (bool) config_item('opendesa_service_checks') && (bool) config_item('admin_external_checks');
     }
 
     private function cek_pengumuman()

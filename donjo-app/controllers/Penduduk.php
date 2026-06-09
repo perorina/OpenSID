@@ -393,7 +393,7 @@ class Penduduk extends Admin_Controller
         $data['suku_penduduk']  = PendudukModel::distinct()->select('suku')->whereNotNull('suku')->whereRaw('LENGTH(suku) > 0')->pluck('suku', 'suku');
         $data['adat_penduduk']  = PendudukModel::distinct()->select('adat')->whereNotNull('adat')->whereRaw('LENGTH(adat) > 0')->pluck('adat', 'adat');
 
-        $data['status_pantau'] = checkWebsiteAccessibility(config_item('server_pantau')) ? 1 : 0;
+        $data['status_pantau'] = config_item('opensid_tracking_enabled') && checkWebsiteAccessibility(config_item('server_pantau')) ? 1 : 0;
         if (! $data['status_pantau']) {
             $data['suku']                    = SukuEnum::all();
             $data['marga']                   = ['Lainnya' => 'Lainnya'];

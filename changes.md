@@ -29,11 +29,21 @@ Catatan ini dipakai untuk melacak perubahan lokal selama refactor OpenSID menjad
 ### Guard eksternal admin
 
 - Menambahkan flag `admin_external_checks = false` di `donjo-app/config/config.php`.
-- Mengubah `donjo-app/core/MY_Controller.php` agar `Tracker::trackDesa()` hanya berjalan saat `admin_external_checks = true`.
+- Mengubah `donjo-app/core/MY_Controller.php` agar `Tracker::trackDesa()` hanya berjalan saat `opensid_tracking_enabled = true`.
 - Membuka `donjo-app/core/Admin_Controller.php` dari bentuk obfuscated/eval menjadi PHP biasa agar fork lebih mudah dirawat.
 - Mengubah `Admin_Controller` agar `PelangganService::perbaruiLangganan()` dan `PelangganService::statusLangganan()` hanya dipanggil saat `admin_external_checks = true`.
 - Alasan: halaman admin selain Beranda, termasuk `/index.php/status_desa`, masih memanggil layanan eksternal `layanan.opendesa.id` dari constructor dan menghasilkan error `Token not provided`.
 - Verifikasi: reload `/index.php/status_desa` berhasil dan tidak menambah baris error baru di `storage/logs/opensid-2026-06-09.log`.
+
+### Anti-tracking Yamansari
+
+- Menambahkan flag eksplisit `opensid_tracking_enabled = false` untuk mematikan telemetry/tracking OpenSID ke Pantau.
+- Menambahkan flag `opendesa_service_checks = false` untuk mematikan cek layanan/langganan OpenDesa otomatis saat page load.
+- Mengubah `MY_Controller` agar `Tracker::trackDesa()` hanya berjalan saat `opensid_tracking_enabled = true`.
+- Mengamankan `Tracker`, `httpPost()`, `get_data_desa()`, `getKodeDesaFromTrackSID()`, dan `kirim_versi_opensid()` agar tidak melakukan request Pantau/catat-versi saat tracking dimatikan.
+- Mengubah `Web_Controller::pemesanan()` agar tidak memanggil `PelangganService::perbaruiLangganan()` otomatis ketika `opendesa_service_checks = false`.
+- Mengubah cek status Pantau di form Identitas Desa dan Penduduk agar tidak melakukan ping eksternal saat tracking dimatikan.
+- Verifikasi: `php -l` bersih untuk file yang diubah, request lokal `/index.php/status_desa` dan `/` berhasil HTTP 200, dan log tidak bertambah error baru.
 
 ### Status Desa / IDM
 
