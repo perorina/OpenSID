@@ -119,12 +119,23 @@ export async function apiPost<T>(path: string, body?: unknown, csrf = true): Pro
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { ...init, credentials: "include" });
-  const envelope = (await response.json()) as ApiEnvelope<T>;
-  if (!response.ok || envelope.status !== "ok") {
-    throw new Error(envelope.error?.message ?? "Request gagal");
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 2500);
+  try {
+    const response = await fetch(`${API_BASE}${path}`, { ...init, credentials: "include", signal: controller.signal });
+    const envelope = (await response.json()) as ApiEnvelope<T>;
+    if (!response.ok || envelope.status !== "ok") {
+      throw new Error(envelope.error?.message ?? "Request gagal");
+    }
+    return envelope.data;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Koneksi API terlalu lama merespons.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
-  return envelope.data;
 }
 
 function readCookie(name: string) {

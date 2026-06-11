@@ -9,10 +9,12 @@
     "preview": "vite preview --host 127.0.0.1 --port 5173"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.0",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "tailwindcss": "^4.3.0",
     "vite": "latest"
   },
   "devDependencies": {
