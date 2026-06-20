@@ -1,0 +1,465 @@
+56
+Performance
+100
+Accessibility
+77
+Best Practices
+83
+SEO
+There were issues affecting this run of Lighthouse:
+
+Chrome extensions negatively affected this page's load performance. Try auditing the page in incognito mode or from a Chrome profile without extensions.
+56
+FCP
++0
+LCP
++0
+TBT
++29
+CLS
++25
+SI
++2
+Performance
+Values are estimated and may vary. The performance score is calculated directly from these metrics.See calculator.
+0–49
+50–89
+90–100
+Final Screenshot
+
+Metrics
+Expand view
+First Contentful Paint
+8.1 s
+Largest Contentful Paint
+15.6 s
+Total Blocking Time
+130 ms
+Cumulative Layout Shift
+0
+Speed Index
+8.5 s
+View Treemap
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Screenshot
+Show audits relevant to:
+
+All
+
+FCP
+
+LCP
+
+TBT
+Insights
+Improve image delivery Est savings of 227 KiB
+Reducing the download time of images can improve the perceived load time of the page and LCP. Learn more about optimizing image sizeFCPLCPUnscored
+URL
+Resource Size
+Est Savings
+unsplash.com
+246.0 KiB	226.7 KiB
+div.mt-7 > div.rounded-[22px] > article.grid > img.h-[78px]
+<img alt="" class="h-[78px] w-[86px] rounded-2xl object-cover" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;f…">
+/photo-150…-9049fed747ef?auto=…(images.unsplash.com)
+110.8 KiB
+109.0 KiB
+Increasing the image compression factor could improve this image's download size.
+28.6 KiB
+This image file is larger than it needs to be (748x675) for its displayed dimensions (139x78). Use responsive images to reduce the image download size.
+108.4 KiB
+Pemandangan sawah dan desa
+<img alt="Pemandangan sawah dan desa" class="absolute inset-0 h-full w-full object-cover" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;f…">
+/photo-150…-9049fed747ef?auto=format&fit=crop&w=1200&q=85(images.unsplash.com)
+110.8 KiB
+94.7 KiB
+This image file is larger than it needs to be (1030x675) for its displayed dimensions (423x238). Use responsive images to reduce the image download size.
+94.7 KiB
+div.mt-7 > div.rounded-[22px] > article.grid > img.h-[78px]
+<img alt="" class="h-[78px] w-[86px] rounded-2xl object-cover" src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&amp;f…">
+/photo-151…-d65bc937f952?auto=format&fit=crop&w=500&q=80(images.unsplash.com)
+24.5 KiB
+23.0 KiB
+Increasing the image compression factor could improve this image's download size.
+4.8 KiB
+This image file is larger than it needs to be (364x333) for its displayed dimensions (117x78). Use responsive images to reduce the image download size.
+22.7 KiB
+LCP breakdown
+Each subpart has specific improvement strategies. Ideally, most of the LCP time should be spent on loading the resources, not within delays.LCPUnscored
+Subpart
+Duration
+Time to first byte
+10 ms
+Resource load delay
+2,480 ms
+Resource load duration
+30 ms
+Element render delay
+30 ms
+Pemandangan sawah dan desa
+<img alt="Pemandangan sawah dan desa" class="absolute inset-0 h-full w-full object-cover" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;f…">
+LCP request discovery
+Optimize LCP by making the LCP image discoverable from the HTML immediately, and avoiding lazy-loadingLCPUnscored
+fetchpriority=high should be applied
+Request is discoverable in initial document
+lazy load not applied
+Pemandangan sawah dan desa
+<img alt="Pemandangan sawah dan desa" class="absolute inset-0 h-full w-full object-cover" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;f…">
+Network dependency tree
+Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.LCPUnscored
+Maximum critical path latency: 2,440 ms
+Initial Navigation
+http://127.0.0.1:5173 - 175 ms, 0.88 KiB
+/src/main.tsx?t=178…(127.0.0.1) - 176 ms, 1.92 KiB
+/src/App.tsx?t=178…(127.0.0.1) - 212 ms, 134.46 KiB
+/src/api.ts?t=178…(127.0.0.1) - 260 ms, 8.22 KiB
+…yms/health(127.0.0.1) - 2,440 ms, 0.00 KiB
+…deps/lucide-react.js?v=a39487e5(127.0.0.1) - 290 ms, 1,083.57 KiB
+…deps/react-dom_client.js?v=b2be3a2d(127.0.0.1) - 220 ms, 801.98 KiB
+…deps/react-dom.js?v=62b61084(127.0.0.1) - 267 ms, 14.53 KiB
+…deps/react.js?v=62b61084(127.0.0.1) - 203 ms, 1.04 KiB
+…deps/react-CHGKtqJi.js?v=bc5f29fe(127.0.0.1) - 261 ms, 38.07 KiB
+…deps/react_jsx-dev-runtime.js?v=62b61084(127.0.0.1) - 216 ms, 10.57 KiB
+/src/styles.css?t=178…(127.0.0.1) - 214 ms, 34.55 KiB
+/@vite/client(127.0.0.1) - 177 ms, 205.36 KiB
+…client/env.mjs(127.0.0.1) - 195 ms, 3.68 KiB
+/@react-refresh(127.0.0.1) - 194 ms, 109.56 KiB
+Preconnected origins
+preconnect hints help the browser establish a connection earlier in the page load, saving time when the first request for that origin is made. The following are the origins that the page preconnected to.
+no origins were preconnected
+Preconnect candidates
+Add preconnect hints to your most important origins, but try to use no more than 4.
+No additional origins are good candidates for preconnecting
+3rd parties
+These insights are also available in the Chrome DevTools Performance Panel - record a trace to view more detailed information.
+Diagnostics
+Reduce JavaScript execution time 1.3 s
+Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.TBTUnscored
+URL
+Total CPU Time
+Script Evaluation
+Script Parse
+127.0.0.1 1st party
+1,392 ms	626 ms	332 ms
+http://127.0.0.1:5173
+863 ms
+191 ms
+327 ms
+…deps/react-dom_client.js?v=b2be3a2d(127.0.0.1)
+437 ms
+358 ms
+5 ms
+/src/App.tsx?t=178…(127.0.0.1)
+92 ms
+77 ms
+1 ms
+Unattributable
+472 ms	24 ms	0 ms
+Unattributable
+472 ms
+24 ms
+0 ms
+Pop up blocker for Chrome™ - Poper Blocker Chrome Extension 
+380 ms	303 ms	48 ms
+chrome-extension://bkkbcggnhapdmkeljlodobbkopceiche/content.js
+176 ms
+164 ms
+0 ms
+chrome-extension://bkkbcggnhapdmkeljlodobbkopceiche/hooksManager.js
+138 ms
+90 ms
+47 ms
+chrome-extension://bkkbcggnhapdmkeljlodobbkopceiche/injectScriptAdjust.js
+66 ms
+49 ms
+1 ms
+Minimize main-thread work 2.3 s
+Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread workTBTUnscored
+Category
+Time Spent
+Script Evaluation
+990 ms
+Other
+718 ms
+Script Parsing & Compilation
+406 ms
+Style & Layout
+124 ms
+Parse HTML & CSS
+57 ms
+Rendering
+34 ms
+Garbage Collection
+14 ms
+Minify JavaScript Est savings of 934 KiB
+Minifying JavaScript files can reduce payload sizes and script parse time. Learn how to minify JavaScript.FCPLCPUnscored
+URL
+Transfer Size
+Est Savings
+127.0.0.1 1st party
+2,396.8 KiB	914.1 KiB
+…deps/lucide-react.js?v=a39487e5(127.0.0.1)
+1,083.3 KiB
+409.9 KiB
+/@vite/client(127.0.0.1)
+205.1 KiB
+173.6 KiB
+…deps/react-dom_client.js?v=b2be3a2d(127.0.0.1)
+801.7 KiB
+125.3 KiB
+/@react-refresh(127.0.0.1)
+109.3 KiB
+99.3 KiB
+/src/App.tsx?t=178…(127.0.0.1)
+134.2 KiB
+88.2 KiB
+/src/api.ts?t=178…(127.0.0.1)
+7.9 KiB
+6.7 KiB
+…deps/react-CHGKtqJi.js?v=bc5f29fe(127.0.0.1)
+37.8 KiB
+6.2 KiB
+…client/env.mjs(127.0.0.1)
+3.4 KiB
+2.9 KiB
+…deps/react-dom.js?v=62b61084(127.0.0.1)
+14.2 KiB
+2.0 KiB
+Unattributable
+55.2 KiB	19.9 KiB
+chrome-extension://ddkjiahejlhfcafbddmgiahcphecmpfh/rulesets/scripting/scriptlet/main/easyprivacy.js
+22.6 KiB
+8.5 KiB
+chrome-extension://ddkjiahejlhfcafbddmgiahcphecmpfh/rulesets/scripting/scriptlet/main/idn-0.js
+17.0 KiB
+6.0 KiB
+chrome-extension://chklaanhfefbnpoihckbnefhakgolnmc/js/content.js
+15.5 KiB
+5.4 KiB
+Reduce unused JavaScript Est savings of 738 KiB
+Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.FCPLCPUnscored
+URL
+Transfer Size
+Est Savings
+127.0.0.1 1st party
+2,261.9 KiB	446.8 KiB
+…deps/react-dom_client.js?v=b2be3a2d(127.0.0.1)
+801.6 KiB
+350.9 KiB
+…react-dom/cjs/react-dom-client.development.js
+733.3 KiB
+324.2 KiB
+…scheduler/cjs/scheduler.development.js
+8.3 KiB
+1.9 KiB
+…deps/lucide-react.js?v=a39487e5(127.0.0.1)
+1,083.3 KiB
+27.4 KiB
+/src/App.tsx?t=178…(127.0.0.1)
+134.2 KiB
+24.6 KiB
+…
+36.3 KiB
+14.6 KiB
+…deps/react-CHGKtqJi.js?v=bc5f29fe(127.0.0.1)
+37.8 KiB
+22.1 KiB
+…cjs/react.development.js
+34.2 KiB
+20.5 KiB
+/@vite/client(127.0.0.1)
+205.1 KiB
+21.8 KiB
+…
+38.6 KiB
+21.8 KiB
+Pop up blocker for Chrome™ - Poper Blocker Chrome Extension 
+368.4 KiB	244.1 KiB
+chrome-extension://bkkbcggnhapdmkeljlodobbkopceiche/content.js
+263.0 KiB
+196.9 KiB
+chrome-extension://bkkbcggnhapdmkeljlodobbkopceiche/hooksManager.js
+105.4 KiB
+47.2 KiB
+Unattributable
+190.3 KiB	47.1 KiB
+chrome-extension://ddkjiahejlhfcafbddmgiahcphecmpfh/rulesets/scripting/scriptlet/main/ublock-filters.js
+190.3 KiB
+47.1 KiB
+Page prevented back/forward cache restoration 1 failure reason
+Many navigations are performed by going back to a previous page, or forwards again. The back/forward cache (bfcache) can speed up these return navigations. Learn more about the bfcacheUnscored
+Failure reason
+Failure type
+Pages with WebSocket cannot enter back/forward cache.
+Pending browser support
+http://127.0.0.1:5173
+Avoid enormous network payloads Total size was 2,696 KiB
+Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.Unscored
+URL
+Transfer Size
+127.0.0.1 1st party
+2,407.6 KiB
+…deps/lucide-react.js?v=a39487e5(127.0.0.1)
+1,083.6 KiB
+…deps/react-dom_client.js?v=b2be3a2d(127.0.0.1)
+802.0 KiB
+/@vite/client(127.0.0.1)
+205.4 KiB
+/src/App.tsx?t=178…(127.0.0.1)
+134.5 KiB
+/@react-refresh(127.0.0.1)
+109.6 KiB
+…deps/react-CHGKtqJi.js?v=bc5f29fe(127.0.0.1)
+38.1 KiB
+/src/styles.css?t=178…(127.0.0.1)
+34.6 KiB
+unsplash.com
+246.3 KiB
+/photo-150…-9049fed747ef?auto=…(images.unsplash.com)
+110.9 KiB
+/photo-150…-9049fed747ef?auto=format&fit=crop&w=1200&q=85(images.unsplash.com)
+110.8 KiB
+/photo-151…-d65bc937f952?auto=format&fit=crop&w=500&q=80(images.unsplash.com)
+24.6 KiB
+Avoid long main-thread tasks 8 long tasks found
+User Timing marks and measures 7 user timings
+More information about the performance of your application. These numbers don't directly affect the Performance score.
+Passed audits (16)
+Show
+100
+Accessibility
+These checks highlight opportunities to improve the accessibility of your web app. Automatic detection can only detect a subset of issues and does not guarantee the accessibility of your web app, so manual testing is also encouraged.
+Additional items to manually check (10)
+Hide
+Interactive controls are keyboard focusable
+Interactive elements indicate their purpose and state
+The page has a logical tab order
+Visual order on the page follows DOM order
+User focus is not accidentally trapped in a region
+The user's focus is directed to new content added to the page
+HTML5 landmark elements are used to improve navigation
+Offscreen content is hidden from assistive technology
+Custom controls have associated labels
+Custom controls have ARIA roles
+These items address areas which an automated testing tool cannot cover. Learn more in our guide on conducting an accessibility review.
+Passed audits (19)
+Show
+Not applicable (41)
+Show
+77
+Best Practices
+General
+Uses deprecated APIs 1 warning found
+Deprecated APIs will eventually be removed from the browser. Learn more about deprecated APIs.
+Deprecation / Warning
+Source
+Pop up blocker for Chrome™ - Poper Blocker Chrome Extension 
+SharedStorage
+content.js:687
+Browser errors were logged to the console
+Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns. Learn more about this errors in console diagnostic audit
+Source
+Description
+127.0.0.1 1st party
+:8090/api/yms/health:1
+Failed to load resource: net::ERR_CONNECTION_REFUSED
+Trust and Safety
+Ensure CSP is effective against XSS attacks
+Use a strong HSTS policy
+Ensure proper origin isolation with COOP
+Mitigate clickjacking with XFO or CSP
+Mitigate DOM-based XSS with Trusted Types
+Passed audits (11)
+Show
+Not applicable (2)
+Show
+83
+SEO
+These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on Core Web Vitals. Learn more about Google Search Essentials.
+Content Best Practices
+Document does not have a meta description
+Meta descriptions may be included in search results to concisely summarize page content. Learn more about the meta description.
+Format your HTML in a way that enables crawlers to better understand your app’s content.
+Crawling and Indexing
+robots.txt is not valid 18 errors found
+If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or indexed. Learn more about robots.txt.
+Line #
+Content
+Error
+1
+<!doctype html>
+Syntax not understood
+2
+<html lang="id">
+Syntax not understood
+3
+<head>
+Syntax not understood
+4
+<script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+Syntax not understood
+5
+injectIntoGlobalHook(window);
+Syntax not understood
+6
+window.$RefreshReg$ = () => {};
+Syntax not understood
+7
+window.$RefreshSig$ = () => (type) => type;</script>
+Syntax not understood
+9
+<script type="module" src="/@vite/client"></script>
+Syntax not understood
+11
+<meta charset="UTF-8" />
+Syntax not understood
+12
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+Syntax not understood
+13
+<link rel="icon" href="/yamansari-mark.svg" type="image/svg+xml" />
+Syntax not understood
+14
+<title>Yamansari Digital</title>
+Syntax not understood
+15
+</head>
+Syntax not understood
+16
+<body>
+Syntax not understood
+17
+<div id="root"></div>
+Syntax not understood
+18
+<script type="module" src="/src/main.tsx?t=1781172964317"></script>
+Syntax not understood
+19
+</body>
+Syntax not understood
+20
+</html>
+Syntax not understood
+To appear in search results, crawlers need access to your app.
+Additional items to manually check (1)
+Hide
+Structured data is valid
+Run these additional validators on your site to check additional SEO best practices.
+Passed audits (7)
+Hide
+Page isn’t blocked from indexing
+Document has a <title> element
+Page has successful HTTP status code
+Links have descriptive text
+Links are crawlable
+Image elements have [alt] attributes
+Document has a valid hreflang
+Not applicable (1)
+Hide
+Document has a valid rel=canonical

@@ -34,7 +34,7 @@ func openDB(ctx context.Context, dsn string) (*sql.DB, error) {
 }
 
 func ensureSchema(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, `
+	if _, err := db.ExecContext(ctx, `
 CREATE TABLE IF NOT EXISTS yms_sessions (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   config_id INT NULL,
@@ -51,6 +51,77 @@ CREATE TABLE IF NOT EXISTS yms_sessions (
   UNIQUE KEY yms_sessions_token_hash_unique (token_hash),
   KEY yms_sessions_id_pend_idx (config_id, id_pend),
   KEY yms_sessions_expires_idx (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`); err != nil {
+		return err
+	}
+
+	if _, err := db.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS yms_admin_sessions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  config_id INT NULL,
+  id_user INT NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  csrf_token CHAR(64) NOT NULL,
+  user_agent VARCHAR(255) NULL,
+  ip_address VARCHAR(64) NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY yms_admin_sessions_token_hash_unique (token_hash),
+  KEY yms_admin_sessions_id_user_idx (config_id, id_user),
+  KEY yms_admin_sessions_expires_idx (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`); err != nil {
+		return err
+	}
+
+	if _, err := db.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS yms_public_contacts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  config_id INT NULL,
+  kind VARCHAR(40) NOT NULL,
+  label VARCHAR(120) NOT NULL,
+  value VARCHAR(180) NOT NULL,
+  description TEXT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY yms_public_contacts_config_idx (config_id, kind, is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`); err != nil {
+		return err
+	}
+
+	if _, err := db.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS yms_public_notices (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  config_id INT NULL,
+  kind VARCHAR(40) NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  body TEXT NULL,
+  starts_at DATETIME NULL,
+  ends_at DATETIME NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY yms_public_notices_config_idx (config_id, kind, is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`); err != nil {
+		return err
+	}
+
+	_, err := db.ExecContext(ctx, `
+CREATE TABLE IF NOT EXISTS yms_revalidate_jobs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  config_id INT NULL,
+  scope VARCHAR(80) NOT NULL,
+  status VARCHAR(40) NOT NULL,
+  message TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY yms_revalidate_jobs_config_idx (config_id, scope, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
 
 	return err

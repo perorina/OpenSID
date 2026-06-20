@@ -1,0 +1,12 @@
+[     423ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/ringkasan:0
+[     426ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/artikel?limit=6:0
+[     426ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/pembangunan?limit=6:0
+[     427ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/program-bantuan?limit=6:0
+[     429ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/dtks:0
+[  328052ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/admin/me:0
+[  328057ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/admin/auth/refresh:0
+[  328360ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/ringkasan:0
+[  328361ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/artikel?limit=6:0
+[  328362ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/pembangunan?limit=6:0
+[  328362ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/program-bantuan?limit=6:0
+[  328363ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://127.0.0.1:5174/_bff/dtks:0

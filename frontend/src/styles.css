@@ -46,6 +46,15 @@
     cursor: pointer;
   }
 
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid rgba(15, 138, 67, 0.28);
+    outline-offset: 3px;
+  }
+
   button:disabled {
     cursor: not-allowed;
   }

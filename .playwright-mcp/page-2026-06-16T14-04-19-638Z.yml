@@ -1,0 +1,12 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - button "Kembali ke portal" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+      - generic [ref=e10]:
+        - paragraph [ref=e11]: Admin DTKS
+        - heading "Desa Yamansari" [level=1] [ref=e12]
+      - generic [ref=e13]: Private
+    - generic [ref=e15]:
+      - img [ref=e16]
+      - text: Memuat data desa

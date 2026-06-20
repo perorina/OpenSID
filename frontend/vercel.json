@@ -1,0 +1,19 @@
+{
+  "headers": [
+    {
+      "source": "/dtks",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive, noimageindex"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/dtks",
+      "destination": "/index.html"
+    }
+  ]
+}

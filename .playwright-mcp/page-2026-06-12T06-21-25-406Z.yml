@@ -1,0 +1,76 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - button "Kembali ke portal" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+      - generic [ref=e10]:
+        - paragraph [ref=e11]: Dashboard internal
+        - heading "DTKS Yamansari" [level=1] [ref=e12]
+      - generic [ref=e13]: Noindex
+    - generic [ref=e14]:
+      - paragraph [ref=e15]: Lebaksiu, Tegal
+      - heading "Pantau agregat DTKS tanpa membuka data pribadi." [level=2] [ref=e16]
+      - paragraph [ref=e17]: Sumber data mengikuti mekanisme OpenSID. Pengelolaan, impor, edit, hapus, ekspor, dan cetak tetap dilakukan dari modul DTKS OpenSID.
+      - generic [ref=e18]:
+        - generic [ref=e19]: "Sumber: OpenSID"
+        - generic [ref=e20]: Menunggu impor
+    - generic [ref=e21]: Data contoh saat API lokal belum aktif.
+    - generic [ref=e22]:
+      - article [ref=e23]:
+        - paragraph [ref=e24]: Ruta DTKS
+        - strong [ref=e25]: "184"
+      - article [ref=e26]:
+        - paragraph [ref=e27]: Anggota
+        - strong [ref=e28]: "642"
+      - article [ref=e29]:
+        - paragraph [ref=e30]: Lampiran
+        - strong [ref=e31]: "38"
+      - article [ref=e32]:
+        - paragraph [ref=e33]: RTM terdaftar
+        - strong [ref=e34]: "128"
+    - generic [ref=e35]:
+      - heading "Versi Kuesioner" [level=2] [ref=e36]
+      - generic [ref=e39]:
+        - generic [ref=e40]: "2025"
+        - generic [ref=e41]: 184 ruta
+    - generic [ref=e44]:
+      - heading "Sumber Data OpenSID" [level=2] [ref=e45]
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - paragraph [ref=e49]: Rumah tangga DTKS
+            - paragraph [ref=e50]: dtks
+          - strong [ref=e51]: "184"
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - paragraph [ref=e54]: Anggota rumah tangga
+            - paragraph [ref=e55]: dtks_anggota
+          - strong [ref=e56]: "642"
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - paragraph [ref=e59]: Lampiran pendataan
+            - paragraph [ref=e60]: dtks_lampiran
+          - strong [ref=e61]: "38"
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - paragraph [ref=e64]: RTM terdaftar DTKS
+            - paragraph [ref=e65]: tweb_rtm
+          - strong [ref=e66]: "128"
+    - generic [ref=e67]:
+      - heading "Alur Pengelolaan" [level=2] [ref=e68]
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: "1"
+          - paragraph [ref=e72]: RTM ditandai sebagai terdaftar DTKS di OpenSID.
+        - generic [ref=e73]:
+          - generic [ref=e74]: "2"
+          - paragraph [ref=e75]: Operator mengisi atau mengimpor kuesioner DTKS dari modul admin.
+        - generic [ref=e76]:
+          - generic [ref=e77]: "3"
+          - paragraph [ref=e78]: Anggota, lampiran, ekspor, cetak, ubah, dan hapus tetap memakai otorisasi OpenSID.
+        - generic [ref=e79]:
+          - generic [ref=e80]: "4"
+          - paragraph [ref=e81]: Vite hanya membaca agregat dari Go API untuk pemantauan cepat.
+    - generic [ref=e82]:
+      - paragraph [ref=e83]: Pembaruan terakhir
+      - paragraph [ref=e84]: Belum ada timestamp DTKS

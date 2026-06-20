@@ -1,4 +1,5 @@
-export const API_BASE = import.meta.env.VITE_YMS_API_BASE ?? "http://127.0.0.1:8090/api/yms";
+export const API_BASE = (import.meta.env.VITE_YMS_BFF_BASE ?? "/_bff").trim();
+export const HAS_API_BASE = API_BASE.length > 0;
 
 export type ApiEnvelope<T> = {
   status: "ok" | "error";
@@ -65,6 +66,98 @@ export type Dtks = {
   rtm_terdaftar_dtks: number;
   versi_kuisioner: Array<{ versi: string | null; jumlah: number }>;
   catatan: string | null;
+  lastUpdated?: string | null;
+  managedBy?: string;
+  adminPath?: string;
+  adminUrl?: string;
+  source?: Array<{ table: string; label: string; rows: number }>;
+};
+
+export type AdminUser = {
+  id: number;
+  config_id: number;
+  username: string;
+  nama: string;
+  email: string | null;
+  id_grup: number;
+};
+
+export type AdminDTKSItem = {
+  id: number;
+  isDraft: boolean;
+  idRtm: number;
+  idKeluarga: number;
+  versiKuisioner: string;
+  noKk: string;
+  kepalaKeluarga: string;
+  kepalaNik: string;
+  dusun: string;
+  rt: string;
+  rw: string;
+  namaResponden: string;
+  petugasPencacahan: string;
+  ppl: string;
+  pml: string;
+  catatan: string;
+  tanggalPendataan: string;
+  updatedAt: string;
+  anggotaCount: number;
+  opensidFormPath: string;
+  opensidFormUrl: string;
+  opensidAnggotaPath: string;
+  opensidAnggotaUrl: string;
+};
+
+export type AdminDTKSAnggota = {
+  id: number;
+  idPenduduk: number;
+  nama: string;
+  nik: string;
+  hubunganKrt: string;
+  hubunganKk: string;
+  jenisKelamin: string;
+  bekerja: string;
+  pendapatanSebulan: number;
+  updatedAt: string;
+};
+
+export type AdminDTKSDetail = {
+  item: AdminDTKSItem;
+  anggota: AdminDTKSAnggota[];
+  indikator: {
+    pkh: string;
+    bltDanaDesa: string;
+    bssBnpt: string;
+    subsidiListrik: string;
+    internetSebulan: string;
+    luasLantai: number;
+    jumlahKamarTidur: string;
+    sumberAirMinum: string;
+    sumberPenerangan: string;
+    bahanBakarMemasak: string;
+  };
+};
+
+export type AdminDTKSList = {
+  summary: Dtks;
+  items: AdminDTKSItem[];
+  count: number;
+};
+
+export type AdminDTKSSeedResult = {
+  rtmCreated: number;
+  dtksCreated: number;
+  anggotaCreated: number;
+  lampiranCreated: number;
+  familiesScanned: number;
+};
+
+export type PublicInitialData = {
+  ringkasan?: Ringkasan;
+  artikel?: Artikel[];
+  pembangunan?: Pembangunan[];
+  program?: ProgramBantuan[];
+  dtks?: Dtks;
 };
 
 export type MandiriUser = {
@@ -113,12 +206,16 @@ export async function apiGet<T>(path: string): Promise<T> {
 
 export async function apiPost<T>(path: string, body?: unknown, csrf = true): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = readCookie("yms_csrf");
+  const token = path.startsWith("/admin/") ? readCookie("yms_admin_csrf") : readCookie("yms_csrf");
   if (csrf && token) headers["X-CSRF-Token"] = token;
   return request<T>(path, { method: "POST", headers, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
+  if (!HAS_API_BASE) {
+    throw new Error("API belum dikonfigurasi.");
+  }
+
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 2500);
   try {

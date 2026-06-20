@@ -1,0 +1,27 @@
+[      72ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=b2be3a2d:14336
+[    2153ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/ringkasan:0
+[    2153ms] [INFO] Failed to fetch @ http://127.0.0.1:5173/src/App.tsx?t=1781172434440:235
+[    2174ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/artikel?limit=6:0
+[    2175ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/pembangunan?limit=6:0
+[    2175ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/program-bantuan?limit=6:0
+[    2175ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/dtks:0
+[    2175ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/me:0
+[    4179ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/ringkasan:0
+[    4179ms] [INFO] Failed to fetch @ http://127.0.0.1:5173/src/App.tsx?t=1781172434440:235
+[    4180ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/artikel?limit=6:0
+[    4180ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/pembangunan?limit=6:0
+[    4180ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/program-bantuan?limit=6:0
+[    4180ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/dtks:0
+[    4195ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/auth/refresh:0
+[    4211ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/me:0
+[    4446ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/auth/refresh:0
+[   77333ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/ringkasan:0
+[   77334ms] [INFO] Failed to fetch @ http://127.0.0.1:5173/src/App.tsx?t=1781172535696:235
+[   77354ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/artikel?limit=6:0
+[   77354ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/pembangunan?limit=6:0
+[   77354ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/program-bantuan?limit=6:0
+[   77354ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/dtks:0
+[   77354ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/me:0
+[   79387ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/mandiri/auth/refresh:0
+[   89536ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:8090/api/yms/health:0
+[   89536ms] [INFO] Failed to fetch @ http://127.0.0.1:5173/src/App.tsx?t=1781172547704:237

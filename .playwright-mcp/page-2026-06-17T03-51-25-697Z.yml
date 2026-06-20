@@ -1,0 +1,164 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - paragraph [ref=e9]: Desa Digital
+            - heading "Yamansari" [level=1] [ref=e10]
+            - paragraph [ref=e11]: Lebaksiu, Tegal
+          - button "Notifikasi" [ref=e12] [cursor=pointer]:
+            - img [ref=e13]
+            - generic [ref=e16]: "3"
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Layanan Desa
+              - heading "Urus informasi desa tanpa datang ke kantor" [level=2] [ref=e21]
+            - generic [ref=e22]: "2025"
+          - generic [ref=e23]:
+            - button "Pengaduan" [ref=e24] [cursor=pointer]:
+              - text: Pengaduan
+              - img [ref=e25]
+            - button "Profil Desa" [ref=e27] [cursor=pointer]:
+              - text: Profil Desa
+              - img [ref=e28]
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - heading "Layanan Utama" [level=2] [ref=e34]
+              - paragraph [ref=e35]: Akses cepat untuk kebutuhan warga
+            - generic [ref=e36]: Publik
+          - generic [ref=e37]:
+            - button "Surat Online Ajukan surat mandiri" [ref=e38] [cursor=pointer]:
+              - img [ref=e40]
+              - generic [ref=e43]:
+                - generic [ref=e44]: Surat Online
+                - generic [ref=e45]: Ajukan surat mandiri
+            - button "Pengaduan Kirim laporan warga" [ref=e46] [cursor=pointer]:
+              - img [ref=e48]
+              - generic [ref=e50]:
+                - generic [ref=e51]: Pengaduan
+                - generic [ref=e52]: Kirim laporan warga
+            - button "Berita Desa Kabar terbaru" [ref=e53] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e58]:
+                - generic [ref=e59]: Berita Desa
+                - generic [ref=e60]: Kabar terbaru
+            - button "Agenda Jadwal kegiatan" [ref=e61] [cursor=pointer]:
+              - img [ref=e63]
+              - generic [ref=e65]:
+                - generic [ref=e66]: Agenda
+                - generic [ref=e67]: Jadwal kegiatan
+            - button "UMKM Produk dan bantuan" [ref=e68] [cursor=pointer]:
+              - img [ref=e70]
+              - generic [ref=e74]:
+                - generic [ref=e75]: UMKM
+                - generic [ref=e76]: Produk dan bantuan
+            - button "Data Desa Statistik publik" [ref=e77] [cursor=pointer]:
+              - img [ref=e79]
+              - generic [ref=e83]:
+                - generic [ref=e84]: Data Desa
+                - generic [ref=e85]: Statistik publik
+            - button "Pengumuman Informasi resmi" [ref=e86] [cursor=pointer]:
+              - img [ref=e88]
+              - generic [ref=e91]:
+                - generic [ref=e92]: Pengumuman
+                - generic [ref=e93]: Informasi resmi
+            - button "Lainnya Profil dan dokumen" [ref=e94] [cursor=pointer]:
+              - img [ref=e96]
+              - generic [ref=e98]:
+                - generic [ref=e99]: Lainnya
+                - generic [ref=e100]: Profil dan dokumen
+        - generic [ref=e101]:
+          - heading "Info Cepat" [level=2] [ref=e103]
+          - generic [ref=e104]:
+            - article [ref=e105]:
+              - img [ref=e107]
+              - generic [ref=e111]:
+                - paragraph [ref=e112]: Penduduk
+                - strong [ref=e113]: "3.245"
+                - generic [ref=e114]: Jiwa
+            - article [ref=e115]:
+              - img [ref=e117]
+              - generic [ref=e121]:
+                - paragraph [ref=e122]: Keluarga
+                - strong [ref=e123]: "1.128"
+                - generic [ref=e124]: KK
+            - article [ref=e125]:
+              - img [ref=e127]
+              - generic [ref=e131]:
+                - paragraph [ref=e132]: RT/RW
+                - strong [ref=e133]: "16"
+                - generic [ref=e134]: Wilayah
+            - article [ref=e135]:
+              - img [ref=e137]
+              - generic [ref=e140]:
+                - paragraph [ref=e141]: DTKS
+                - strong [ref=e142]: "184"
+                - generic [ref=e143]: Ruta
+        - generic [ref=e144]:
+          - heading "Berita Terbaru" [level=2] [ref=e145]
+          - button "Lihat" [ref=e146] [cursor=pointer]:
+            - text: Lihat
+            - img [ref=e147]
+        - generic [ref=e149]:
+          - article [ref=e150]:
+            - generic [ref=e151]:
+              - generic [ref=e152]: Pembangunan
+              - heading "Gotong Royong Warga Bangun Jalan Lingkungan" [level=3] [ref=e153]
+              - paragraph [ref=e154]: 20 Mei 2025
+            - link "Buka Gotong Royong Warga Bangun Jalan Lingkungan" [ref=e155] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e156]
+          - article [ref=e158]:
+            - generic [ref=e159]:
+              - generic [ref=e160]: Pemerintahan
+              - heading "Musdes Bahas RKPDes 2026 Desa Yamansari" [level=3] [ref=e161]
+              - paragraph [ref=e162]: 18 Mei 2025
+            - link "Buka Musdes Bahas RKPDes 2026 Desa Yamansari" [ref=e163] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e164]
+        - generic [ref=e166]:
+          - heading "Agenda Desa" [level=2] [ref=e167]
+          - button "Lihat" [ref=e168] [cursor=pointer]:
+            - text: Lihat
+            - img [ref=e169]
+        - article [ref=e171]:
+          - generic [ref=e172]:
+            - strong [ref=e173]: "24"
+            - generic [ref=e174]: Mei
+            - generic [ref=e175]: "2025"
+          - generic [ref=e176]:
+            - heading "Posyandu Balita & Lansia" [level=3] [ref=e177]
+            - paragraph [ref=e178]:
+              - img [ref=e179]
+              - text: Balai Desa Yamansari
+            - paragraph [ref=e182]:
+              - img [ref=e183]
+              - text: 08.00 - 11.00 WIB
+          - img [ref=e186]
+        - article [ref=e188]:
+          - img [ref=e190]
+          - generic [ref=e192]:
+            - heading "Butuh Bantuan?" [level=3] [ref=e193]
+            - paragraph [ref=e194]: Informasi bantuan pangan yamansari dan layanan desa.
+          - link "Hubungi" [ref=e195] [cursor=pointer]:
+            - /url: https://wa.me/
+            - img [ref=e196]
+            - text: Hubungi
+    - navigation "Navigasi bawah" [ref=e198]:
+      - generic [ref=e199]:
+        - button "Beranda" [ref=e200] [cursor=pointer]:
+          - img [ref=e201]
+          - generic [ref=e204]: Beranda
+        - button "Layanan" [ref=e205] [cursor=pointer]:
+          - img [ref=e206]
+          - generic [ref=e208]: Layanan
+        - button "Informasi" [ref=e209] [cursor=pointer]:
+          - img [ref=e210]
+          - generic [ref=e213]: Informasi
+        - button "Akun" [ref=e214] [cursor=pointer]:
+          - img [ref=e215]
+          - generic [ref=e218]: Akun

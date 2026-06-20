@@ -1,0 +1,101 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - button "Kembali ke portal" [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+        - generic [ref=e10]:
+          - paragraph [ref=e11]: Data warga
+          - heading "DTKS Yamansari" [level=1] [ref=e12]
+        - generic [ref=e13]: Terbatas
+      - generic [ref=e14]:
+        - img [ref=e15]
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - paragraph [ref=e19]: Lebaksiu, Tegal
+            - heading "Data DTKS dalam ringkasan." [level=2] [ref=e20]
+            - paragraph [ref=e21]: Agregat cepat dari OpenSID tanpa membuka data pribadi warga.
+          - generic [ref=e22]:
+            - generic [ref=e23]: "Sumber: OpenSID"
+            - generic [ref=e24]: Menunggu impor
+      - generic [ref=e25]: Data contoh saat API lokal belum aktif.
+      - generic [ref=e26]:
+        - heading "Ringkasan DTKS" [level=2] [ref=e28]
+        - generic [ref=e29]:
+          - article [ref=e30]:
+            - img [ref=e32]
+            - generic [ref=e35]:
+              - paragraph [ref=e36]: Ruta DTKS
+              - strong [ref=e37]: "184"
+              - generic [ref=e38]: Ruta
+          - article [ref=e39]:
+            - img [ref=e41]
+            - generic [ref=e45]:
+              - paragraph [ref=e46]: Anggota
+              - strong [ref=e47]: "642"
+              - generic [ref=e48]: Jiwa
+          - article [ref=e49]:
+            - img [ref=e51]
+            - generic [ref=e54]:
+              - paragraph [ref=e55]: Lampiran
+              - strong [ref=e56]: "38"
+              - generic [ref=e57]: Berkas
+          - article [ref=e58]:
+            - img [ref=e60]
+            - generic [ref=e64]:
+              - paragraph [ref=e65]: RTM terdaftar
+              - strong [ref=e66]: "128"
+              - generic [ref=e67]: RTM
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - heading "Versi Kuesioner" [level=2] [ref=e70]
+          - generic [ref=e73]:
+            - generic [ref=e74]: "2025"
+            - generic [ref=e75]: 184 ruta
+        - generic [ref=e78]:
+          - heading "Sumber Data" [level=2] [ref=e79]
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: Rumah tangga DTKS
+              - paragraph [ref=e83]: dtks
+              - strong [ref=e84]: "184"
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Anggota rumah tangga
+              - paragraph [ref=e87]: dtks_anggota
+              - strong [ref=e88]: "642"
+            - generic [ref=e89]:
+              - paragraph [ref=e90]: Lampiran pendataan
+              - paragraph [ref=e91]: dtks_lampiran
+              - strong [ref=e92]: "38"
+            - generic [ref=e93]:
+              - paragraph [ref=e94]: RTM terdaftar DTKS
+              - paragraph [ref=e95]: tweb_rtm
+              - strong [ref=e96]: "128"
+        - article [ref=e97]:
+          - generic [ref=e98]:
+            - img [ref=e100]
+            - generic [ref=e103]:
+              - heading "Pengelolaan tetap di OpenSID" [level=3] [ref=e104]
+              - paragraph [ref=e105]: Impor, ubah, hapus, ekspor, dan cetak data mengikuti otorisasi admin OpenSID.
+          - generic [ref=e106]:
+            - generic [ref=e107]: 1. Tandai RTM terdaftar DTKS.
+            - generic [ref=e108]: 2. Isi atau impor kuesioner dari modul admin.
+            - generic [ref=e109]: 3. Pantau agregatnya di halaman ini.
+          - generic [ref=e111]:
+            - paragraph [ref=e112]: Pembaruan terakhir
+            - paragraph [ref=e113]: Belum ada timestamp
+      - paragraph [ref=e114]: Halaman ini tidak ditampilkan di hasil pencarian publik.
+    - navigation "Navigasi bawah" [ref=e115]:
+      - generic [ref=e116]:
+        - button "Beranda" [ref=e117] [cursor=pointer]:
+          - img [ref=e118]
+          - generic [ref=e121]: Beranda
+        - button "Layanan" [ref=e122] [cursor=pointer]:
+          - img [ref=e123]
+          - generic [ref=e125]: Layanan
+        - button "Informasi" [ref=e126] [cursor=pointer]:
+          - img [ref=e127]
+          - generic [ref=e130]: Informasi
+        - button "Akun" [ref=e131] [cursor=pointer]:
+          - img [ref=e132]
+          - generic [ref=e135]: Akun
