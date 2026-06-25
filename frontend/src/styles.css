@@ -1,11 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: Inter, "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --color-primary: #0f8a43;
-  --color-primary-dark: #086b33;
-  --color-primary-soft: #e8f7ee;
-  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --color-village-950: #0b1f12;
+  --color-village-900: #102f1a;
+  --color-village-800: #16401f;
+  --color-village-700: #1f5a2e;
+  --color-village-600: #2f6b3a;
+  --color-village-500: #3d7a46;
+  --color-village-100: #eaf3ec;
+  --color-village-50: #f4faf5;
+
+  --color-cream-50: #fcfaf4;
+  --color-civic-surface: #ffffff;
+  --color-civic-soft: #f8faf7;
+  --color-civic-border: #e4e8e3;
+  --color-civic-border-soft: #eef1ed;
+  --color-civic-text: #151a17;
+  --color-civic-muted: #66706a;
+  --color-civic-subtle: #8b938e;
+  --color-civic-warning: #b85c38;
+  --color-civic-warning-ink: #8f3f25;
+  --color-civic-warning-bg: #fff2ea;
+  --color-civic-danger: #c2413b;
+  --color-civic-danger-bg: #fef2f2;
+
+  --radius-civic-sm: 10px;
+  --radius-civic-md: 14px;
+  --radius-civic-lg: 16px;
+  --radius-civic-xl: 20px;
+
+  --shadow-civic-sm: 0 2px 8px rgba(16, 47, 26, 0.06);
+  --shadow-civic-md: 0 8px 24px rgba(16, 47, 26, 0.1);
 }
 
 @layer base {
@@ -14,17 +41,16 @@
   }
 
   html {
-    background: #f1f5f9;
+    background: var(--color-cream-50);
+    color-scheme: light;
   }
 
   body {
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    background:
-      radial-gradient(circle at top left, rgba(15, 138, 67, 0.08), transparent 32rem),
-      #f1f5f9;
-    color: #0f172a;
+    background: var(--color-cream-50);
+    color: var(--color-civic-text);
     font-family: var(--font-sans);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -40,6 +66,7 @@
   button,
   a {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   button {
@@ -51,12 +78,45 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 3px solid rgba(15, 138, 67, 0.28);
-    outline-offset: 3px;
+    outline: 2px solid var(--color-village-700);
+    outline-offset: 2px;
   }
 
   button:disabled {
     cursor: not-allowed;
+  }
+
+  ::selection {
+    background: var(--color-village-100);
+    color: var(--color-village-950);
+  }
+}
+
+@layer components {
+  .civic-card {
+    border: 1px solid var(--color-civic-border);
+    border-radius: var(--radius-civic-lg);
+    background: var(--color-civic-surface);
+    box-shadow: var(--shadow-civic-sm);
+  }
+
+  .civic-control {
+    min-height: 44px;
+    border: 1px solid var(--color-civic-border);
+    border-radius: var(--radius-civic-sm);
+    background: var(--color-civic-surface);
+    color: var(--color-civic-text);
+  }
+
+  .civic-icon-box {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: var(--radius-civic-md);
+    background: var(--color-village-100);
+    color: var(--color-village-700);
   }
 }
 
@@ -72,4 +132,23 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

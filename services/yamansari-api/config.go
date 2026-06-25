@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,34 +15,42 @@ import (
 )
 
 type Config struct {
-	Addr           string
-	DBDSN          string
-	DBConfigError  string
-	ConfigID       int64
-	AllowedOrigins map[string]bool
-	InternalAPIKey string
-	JWTSecret      []byte
-	CookieSecure   bool
-	OpenSIDBaseURL string
-	AccessTTL      time.Duration
-	RefreshTTL     time.Duration
+	Addr               string
+	DBDSN              string
+	DBConfigError      string
+	ConfigID           int64
+	AllowedOrigins     map[string]bool
+	InternalAPIKey     string
+	JWTSecret          []byte
+	CookieSecure       bool
+	OpenSIDBaseURL     string
+	OpenSIDDocumentDir string
+	PPIDSamplePDFDir   string
+	DIPSamplePDFDir    string
+	SampleDataEnabled  bool
+	AccessTTL          time.Duration
+	RefreshTTL         time.Duration
 }
 
 func LoadConfig() Config {
 	dbDSN, dbConfigError := envDBDSN()
 
 	return Config{
-		Addr:           envString("YMS_API_ADDR", "127.0.0.1:8090"),
-		DBDSN:          dbDSN,
-		DBConfigError:  dbConfigError,
-		ConfigID:       envInt64("YMS_CONFIG_ID", 1),
-		AllowedOrigins: envOrigins("YMS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"),
-		InternalAPIKey: envString("YMS_INTERNAL_API_KEY", "dev-internal-key"),
-		JWTSecret:      []byte(envString("YMS_JWT_SECRET", "dev-change-me")),
-		CookieSecure:   envBool("YMS_COOKIE_SECURE", false),
-		OpenSIDBaseURL: strings.TrimRight(envString("YMS_OPENSID_BASE_URL", "http://127.0.0.1:8081"), "/"),
-		AccessTTL:      15 * time.Minute,
-		RefreshTTL:     7 * 24 * time.Hour,
+		Addr:               envString("YMS_API_ADDR", "127.0.0.1:8090"),
+		DBDSN:              dbDSN,
+		DBConfigError:      dbConfigError,
+		ConfigID:           envInt64("YMS_CONFIG_ID", 1),
+		AllowedOrigins:     envOrigins("YMS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"),
+		InternalAPIKey:     envString("YMS_INTERNAL_API_KEY", "dev-internal-key"),
+		JWTSecret:          []byte(envString("YMS_JWT_SECRET", "dev-change-me")),
+		CookieSecure:       envBool("YMS_COOKIE_SECURE", false),
+		OpenSIDBaseURL:     strings.TrimRight(envString("YMS_OPENSID_BASE_URL", "http://127.0.0.1:8081"), "/"),
+		OpenSIDDocumentDir: filepath.Clean(envString("YMS_OPENSID_DOCUMENT_DIR", filepath.Join("..", "..", "desa", "upload", "dokumen"))),
+		PPIDSamplePDFDir:   filepath.Clean(envString("YMS_PPID_SAMPLE_PDF_DIR", filepath.Join("..", "..", "output", "pdf", "ppid"))),
+		DIPSamplePDFDir:    filepath.Clean(envString("YMS_DIP_SAMPLE_PDF_DIR", filepath.Join("..", "..", "output", "pdf", "ppid", "dip"))),
+		SampleDataEnabled:  envBool("YMS_ENABLE_SAMPLE_DATA", false),
+		AccessTTL:          15 * time.Minute,
+		RefreshTTL:         7 * 24 * time.Hour,
 	}
 }
 

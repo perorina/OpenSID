@@ -12,12 +12,13 @@ import (
 )
 
 type App struct {
-	cfg          Config
-	db           *sql.DB
-	schema       *SchemaCache
-	cache        *TTLCache
-	startedAt    time.Time
-	loginLimiter *LoginLimiter
+	cfg           Config
+	db            *sql.DB
+	schema        *SchemaCache
+	cache         *TTLCache
+	startedAt     time.Time
+	loginLimiter  *LoginLimiter
+	publicLimiter *WindowLimiter
 }
 
 func main() {
@@ -43,12 +44,13 @@ func main() {
 	}
 
 	app := &App{
-		cfg:          cfg,
-		db:           db,
-		schema:       NewSchemaCache(db),
-		cache:        NewTTLCache(),
-		startedAt:    time.Now(),
-		loginLimiter: NewLoginLimiter(3, 300*time.Second),
+		cfg:           cfg,
+		db:            db,
+		schema:        NewSchemaCache(db),
+		cache:         NewTTLCache(),
+		startedAt:     time.Now(),
+		loginLimiter:  NewLoginLimiter(3, 300*time.Second),
+		publicLimiter: NewWindowLimiter(8, 15*time.Minute),
 	}
 
 	server := &http.Server{
@@ -89,12 +91,21 @@ func (a *App) routes() http.Handler {
 			r.Get("/public/planning", a.publicPlanning)
 			r.Get("/public/programs", a.programBantuan)
 			r.Get("/public/legal-products", a.publicDocuments)
-			r.Get("/public/ppid", a.publicDocuments)
-			r.Get("/public/dip", a.publicDocuments)
+			r.Get("/public/ppid", a.publicPPID)
+			r.Get("/public/dip", a.publicDIP)
+			r.Get("/public/publications", a.publicPublications)
+			r.Get("/public/dip/{id}", a.publicDIPDetail)
+			r.Get("/public/documents/{id}/content", a.publicDocumentContent)
+			r.Head("/public/documents/{id}/content", a.publicDocumentContent)
 			r.Get("/public/stats", a.ringkasan)
 			r.Get("/public/articles", a.artikel)
 			r.Get("/public/announcements", a.artikel)
 			r.Get("/public/emergency", a.publicEmergency)
+			r.Post("/public/ppid/requests", a.createInformationRequest)
+			r.Post("/public/ppid/requests/track", a.trackInformationRequest)
+			r.Post("/public/ppid/objections", a.createInformationObjection)
+			r.Post("/public/ppid/objections/track", a.trackInformationObjection)
+			r.Get("/public/ppid/report", a.publicPPIDReport)
 			r.Post("/public/complaints", a.createPublicComplaint)
 			r.Post("/pengaduan", a.createPublicComplaint)
 
@@ -128,6 +139,20 @@ func (a *App) routes() http.Handler {
 				r.Post("/admin/dtks/seed-dummy", a.adminDTKSSeedDummy)
 				r.Get("/admin/dtks/{id}", a.adminDTKSDetail)
 				r.Post("/admin/dtks/{id}/status", a.adminDTKSUpdateStatus)
+				r.Get("/admin/ppid", a.adminPPID)
+				r.Post("/admin/ppid", a.adminPPIDUpdate)
+				r.Post("/admin/ppid/seed-sample", a.adminPPIDSeedSample)
+				r.Get("/admin/dip", a.adminDIP)
+				r.Post("/admin/dip/seed-sample", a.adminDIPSeedSample)
+				r.Post("/admin/dip/{id}", a.adminDIPUpdate)
+				r.Get("/admin/ppid/services", a.adminPPIDServices)
+				r.Get("/admin/ppid/report.csv", a.adminPPIDReportCSV)
+				r.Post("/admin/ppid/seed-workflow", a.adminSeedPPIDWorkflow)
+				r.Post("/admin/ppid/requests/{id}", a.adminUpdatePPIDRequest)
+				r.Post("/admin/ppid/objections/{id}", a.adminUpdatePPIDObjection)
+				r.Get("/admin/ppid/emergencies", a.adminEmergencies)
+				r.Post("/admin/ppid/emergencies", a.adminCreateEmergency)
+				r.Post("/admin/ppid/emergencies/{id}", a.adminUpdateEmergency)
 			})
 		})
 	})

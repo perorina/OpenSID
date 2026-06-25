@@ -11,22 +11,25 @@ import {
   ClipboardList,
   Database,
   Eye,
+  ExternalLink,
   FileArchive,
   FileText,
   Grid2X2,
-  Headphones,
   Home,
   Landmark,
   ListChecks,
   Loader2,
   LogIn,
   LogOut,
+  Mail,
+  Menu,
   MapPin,
   Megaphone,
   MessageCircle,
   Newspaper,
   PhoneCall,
   Scale,
+  Save,
   Send,
   ShieldCheck,
   Siren,
@@ -36,19 +39,41 @@ import {
   UsersRound,
 } from "lucide-react";
 import { apiGet, apiPost } from "./api";
+import { loginAdmin, logoutAdmin, restoreAdminSession } from "./admin-auth";
+import { DIPAdminPage, DIPDetailPage, DIPListPage } from "./dip-pages";
+import {
+  BudgetSummary,
+  EmergencyPublicPage,
+  InformationObjectionPage,
+  InformationRequestPage,
+  PPIDReportPage,
+  PPIDServicesAdminPage,
+  PublicationCoveragePanel,
+  PublicationDocuments,
+} from "./ppid-service-pages";
 import type {
   AdminDTKSDetail,
   AdminDTKSItem,
   AdminDTKSList,
   AdminDTKSSeedResult,
+  AdminPPIDPayload,
+  AdminPPIDSeedResult,
   AdminUser,
   ArsipSurat,
   Artikel,
+  BudgetData,
   Dtks,
+  DIPEntry,
+  DIPListPayload,
+  EmergencyData,
   MandiriUser,
   Pembangunan,
   PermohonanSurat,
   ProgramBantuan,
+  PPIDReport,
+  PPIDProfile,
+  PPIDPublicData,
+  PublicationCatalog,
   PublicInitialData,
   Ringkasan,
   SuratTemplate,
@@ -65,6 +90,9 @@ const publicRouteKeys = [
   "produk-hukum",
   "ppid",
   "dip",
+  "permohonan-informasi",
+  "keberatan-informasi",
+  "laporan-ppid",
   "data-desa",
   "berita",
   "pengumuman",
@@ -74,7 +102,7 @@ const publicRouteKeys = [
 ] as const;
 
 export type PublicRouteKey = (typeof publicRouteKeys)[number];
-export type PageRoute = "portal" | "dtks" | PublicRouteKey;
+export type PageRoute = "portal" | "dtks" | "admin-ppid" | "admin-ppid-layanan" | "admin-dip" | "dip-detail" | PublicRouteKey;
 type DrawerKind = "services" | "information";
 type MenuTarget = PublicRouteKey | "dtks" | "account";
 type ServiceTarget = MenuTarget;
@@ -87,19 +115,19 @@ type AppProps = {
 
 const HERO_IMAGE = "/hero-sawah.webp";
 const HERO_IMAGE_SRCSET = "/hero-sawah-384.webp 384w, /hero-sawah.webp 480w";
-const HERO_IMAGE_SIZES = "(max-width: 425px) calc(100vw - 32px), 393px";
+const HERO_IMAGE_SIZES = "(max-width: 430px) calc(100vw - 32px), 398px";
 
 const publicRouteSet = new Set<string>(publicRouteKeys);
 
 const serviceItems: Array<{ label: string; icon: typeof Home; tone: string; target: ServiceTarget }> = [
   { label: "Surat Online", icon: FileText, tone: "green", target: "account" },
-  { label: "Pengaduan", icon: MessageCircle, tone: "orange", target: "pengaduan" },
-  { label: "Berita Desa", icon: Newspaper, tone: "blue", target: "berita" },
-  { label: "Agenda", icon: CalendarDays, tone: "purple", target: "pengumuman" },
+  { label: "Pengaduan", icon: MessageCircle, tone: "green", target: "pengaduan" },
+  { label: "Berita Desa", icon: Newspaper, tone: "green", target: "berita" },
+  { label: "Agenda", icon: CalendarDays, tone: "green", target: "pengumuman" },
   { label: "UMKM", icon: Store, tone: "green", target: "program" },
-  { label: "Data Desa", icon: UsersRound, tone: "blue", target: "data-desa" },
-  { label: "Pengumuman", icon: Megaphone, tone: "red", target: "pengumuman" },
-  { label: "Lainnya", icon: Grid2X2, tone: "yellow", target: "profil" },
+  { label: "Data Desa", icon: UsersRound, tone: "green", target: "data-desa" },
+  { label: "Pengumuman", icon: Megaphone, tone: "green", target: "pengumuman" },
+  { label: "Lainnya", icon: Grid2X2, tone: "green", target: "profil" },
 ];
 
 const serviceCopy: Record<string, string> = {
@@ -115,24 +143,27 @@ const serviceCopy: Record<string, string> = {
 
 const serviceDrawerItems: Array<{ label: string; description: string; icon: typeof Home; tone: string; target: MenuTarget }> = [
   { label: "Surat Online", description: "Layanan mandiri", icon: FileText, tone: "green", target: "account" },
-  { label: "Pengaduan", description: "Aspirasi warga", icon: MessageCircle, tone: "orange", target: "pengaduan" },
+  { label: "Pengaduan", description: "Aspirasi warga", icon: MessageCircle, tone: "green", target: "pengaduan" },
+  { label: "Permohonan Info", description: "Layanan PPID", icon: FileText, tone: "green", target: "permohonan-informasi" },
+  { label: "Keberatan PPID", description: "Tindak lanjut", icon: Scale, tone: "green", target: "keberatan-informasi" },
   { label: "Mobil Siaga", description: "Kontak cepat", icon: PhoneCall, tone: "green", target: "mobil-siaga" },
   { label: "Darurat", description: "Info penting", icon: Siren, tone: "red", target: "darurat" },
-  { label: "Program", description: "Kegiatan desa", icon: ClipboardList, tone: "blue", target: "program" },
+  { label: "Program", description: "Kegiatan desa", icon: ClipboardList, tone: "green", target: "program" },
 ];
 
 const informationDrawerItems: Array<{ label: string; description: string; icon: typeof Home; tone: string; target: MenuTarget }> = [
   { label: "Profil Desa", description: "Identitas wilayah", icon: Landmark, tone: "green", target: "profil" },
-  { label: "Pemerintah", description: "Perangkat desa", icon: Building2, tone: "blue", target: "pemerintah-desa" },
+  { label: "Pemerintah", description: "Perangkat desa", icon: Building2, tone: "green", target: "pemerintah-desa" },
   { label: "Struktur", description: "Organisasi", icon: UsersRound, tone: "green", target: "struktur-organisasi" },
-  { label: "APBDes", description: "Anggaran", icon: WalletCards, tone: "orange", target: "apbdes" },
-  { label: "RPJM/RKP", description: "Perencanaan", icon: BookOpen, tone: "purple", target: "perencanaan" },
-  { label: "Produk Hukum", description: "Regulasi desa", icon: Scale, tone: "blue", target: "produk-hukum" },
+  { label: "APBDes", description: "Anggaran", icon: WalletCards, tone: "green", target: "apbdes" },
+  { label: "RPJM/RKP", description: "Perencanaan", icon: BookOpen, tone: "green", target: "perencanaan" },
+  { label: "Produk Hukum", description: "Regulasi desa", icon: Scale, tone: "green", target: "produk-hukum" },
   { label: "PPID", description: "Info publik", icon: ShieldCheck, tone: "green", target: "ppid" },
-  { label: "DIP", description: "Daftar informasi", icon: FileArchive, tone: "orange", target: "dip" },
-  { label: "Data Desa", description: "Statistik", icon: Database, tone: "blue", target: "data-desa" },
+  { label: "DIP", description: "Daftar informasi", icon: FileArchive, tone: "green", target: "dip" },
+  { label: "Laporan PPID", description: "Rekap layanan", icon: ListChecks, tone: "green", target: "laporan-ppid" },
+  { label: "Data Desa", description: "Statistik", icon: Database, tone: "green", target: "data-desa" },
   { label: "Berita", description: "Kabar terbaru", icon: Newspaper, tone: "green", target: "berita" },
-  { label: "Pengumuman", description: "Informasi resmi", icon: Megaphone, tone: "red", target: "pengumuman" },
+  { label: "Pengumuman", description: "Informasi resmi", icon: Megaphone, tone: "green", target: "pengumuman" },
 ];
 
 const publicPageConfig: Record<PublicRouteKey, { eyebrow: string; title: string; description: string; icon: typeof Home; tone: string }> = {
@@ -148,12 +179,12 @@ const publicPageConfig: Record<PublicRouteKey, { eyebrow: string; title: string;
     title: "Pemerintah Desa",
     description: "Ringkasan pemerintah desa dan perangkat pelayanan warga.",
     icon: Building2,
-    tone: "blue",
+    tone: "green",
   },
   "struktur-organisasi": {
     eyebrow: "Organisasi",
     title: "Struktur Organisasi",
-    description: "Susunan organisasi pemerintah desa dari data pamong OpenSID.",
+    description: "Susunan organisasi pemerintah desa dan pembagian tanggung jawab pelayanan.",
     icon: UsersRound,
     tone: "green",
   },
@@ -162,28 +193,28 @@ const publicPageConfig: Record<PublicRouteKey, { eyebrow: string; title: string;
     title: "APBDes & Realisasi",
     description: "Informasi anggaran desa, realisasi, dan ringkasan belanja publik.",
     icon: WalletCards,
-    tone: "orange",
+    tone: "green",
   },
   perencanaan: {
     eyebrow: "Perencanaan",
     title: "RPJMDes & RKPDes",
     description: "Dokumen rencana pembangunan jangka menengah dan tahunan desa.",
     icon: BookOpen,
-    tone: "purple",
+    tone: "green",
   },
   program: {
     eyebrow: "Kegiatan Desa",
     title: "Program & Kegiatan",
     description: "Program bantuan, pembangunan, dan kegiatan prioritas desa.",
     icon: ClipboardList,
-    tone: "blue",
+    tone: "green",
   },
   "produk-hukum": {
     eyebrow: "Regulasi",
     title: "Produk Hukum Desa",
     description: "Peraturan desa, keputusan kepala desa, dan dokumen hukum.",
     icon: Scale,
-    tone: "blue",
+    tone: "green",
   },
   ppid: {
     eyebrow: "Informasi Publik",
@@ -197,14 +228,35 @@ const publicPageConfig: Record<PublicRouteKey, { eyebrow: string; title: string;
     title: "Daftar Informasi Publik",
     description: "Daftar informasi yang tersedia setiap saat, berkala, dan serta merta.",
     icon: FileArchive,
-    tone: "orange",
+    tone: "green",
+  },
+  "permohonan-informasi": {
+    eyebrow: "Layanan PPID",
+    title: "Permohonan Informasi",
+    description: "Ajukan permintaan informasi publik dan simpan token pelacakan.",
+    icon: FileText,
+    tone: "green",
+  },
+  "keberatan-informasi": {
+    eyebrow: "Layanan PPID",
+    title: "Keberatan Informasi",
+    description: "Ajukan keberatan atas layanan informasi publik sesuai prosedur.",
+    icon: Scale,
+    tone: "green",
+  },
+  "laporan-ppid": {
+    eyebrow: "Transparansi PPID",
+    title: "Laporan Layanan PPID",
+    description: "Rekap permohonan informasi, keberatan, tenggat, dan publikasi DIP.",
+    icon: ListChecks,
+    tone: "green",
   },
   "data-desa": {
     eyebrow: "Statistik",
     title: "Statistik Data Desa",
     description: "Data agregat penduduk, keluarga, wilayah, layanan, dan DTKS.",
     icon: Database,
-    tone: "blue",
+    tone: "green",
   },
   berita: {
     eyebrow: "Publikasi",
@@ -218,14 +270,14 @@ const publicPageConfig: Record<PublicRouteKey, { eyebrow: string; title: string;
     title: "Berita & Pengumuman",
     description: "Pengumuman resmi, agenda, dan informasi penting untuk warga.",
     icon: Megaphone,
-    tone: "red",
+    tone: "green",
   },
   pengaduan: {
     eyebrow: "Layanan Warga",
     title: "Layanan Pengaduan",
     description: "Kirim aspirasi, laporan, atau pertanyaan kepada perangkat desa.",
     icon: MessageCircle,
-    tone: "orange",
+    tone: "green",
   },
   "mobil-siaga": {
     eyebrow: "Bantuan Cepat",
@@ -366,24 +418,10 @@ const dummyLawDocs = [
   { title: "SK Tim Pelaksana Kegiatan Desa", category: "Keputusan Kepala Desa", date: "16 Feb 2025", status: "Berlaku" },
 ];
 
-const dummyDipItems = [
-  { title: "Profil desa dan struktur pemerintahan", category: "Berkala", date: "Update semester", status: "Publik" },
-  { title: "APBDes, realisasi, dan laporan kegiatan", category: "Berkala", date: "Update triwulan", status: "Publik" },
-  { title: "Daftar peraturan desa dan keputusan kepala desa", category: "Setiap saat", date: "Update bila berubah", status: "Publik" },
-  { title: "Informasi darurat dan mobil siaga", category: "Serta merta", date: "Update cepat", status: "Publik" },
-];
-
 const dummyAnnouncements = [
   { title: "Pelayanan administrasi pindah sementara ke aula desa", date: "25 Mei 2025", category: "Pelayanan", copy: "Loket pelayanan tetap buka pukul 08.00-14.00 WIB selama penataan ruang kantor." },
   { title: "Musyawarah dusun penyusunan usulan RKPDes", date: "28 Mei 2025", category: "Perencanaan", copy: "Warga dapat menyampaikan usulan kegiatan melalui ketua RT/RW masing-masing." },
   { title: "Jadwal pembayaran PBB kolektif tahap pertama", date: "02 Jun 2025", category: "Pajak", copy: "Pembayaran kolektif dilayani di balai desa dan pos pelayanan wilayah." },
-];
-
-const dummyPpidServices = [
-  { label: "Pejabat PPID", value: "Sekretaris Desa Yamansari" },
-  { label: "Desk Layanan", value: "Kantor Desa, Senin-Jumat 08.00-14.00 WIB" },
-  { label: "Waktu Respon", value: "Maksimal 10 hari kerja untuk permohonan informasi" },
-  { label: "Kanal Kontak", value: "ppid@yamansari.desa.id / 0283 619 2025" },
 ];
 
 const dummyEmergencyContacts = [
@@ -401,6 +439,13 @@ export default function App({ initialData, initialRoute }: AppProps = {}) {
   const [pembangunan, setPembangunan] = useState<Pembangunan[]>(initialData?.pembangunan ?? fallbackPembangunan);
   const [program, setProgram] = useState<ProgramBantuan[]>(initialData?.program ?? fallbackProgram);
   const [dtks, setDtks] = useState<Dtks>(initialData?.dtks ?? fallbackDtks);
+  const [ppid, setPpid] = useState<PPIDPublicData | null>(initialData?.ppid ?? null);
+  const [dip] = useState<DIPListPayload | undefined>(initialData?.dip);
+  const [dipDetail] = useState<DIPEntry | undefined>(initialData?.dipDetail);
+  const [publications, setPublications] = useState<PublicationCatalog | undefined>(initialData?.publications);
+  const [budget, setBudget] = useState<BudgetData | undefined>(initialData?.budget);
+  const [emergency, setEmergency] = useState<EmergencyData | undefined>(initialData?.emergency);
+  const [ppidReport, setPpidReport] = useState<PPIDReport | undefined>(initialData?.ppidReport);
   const [user, setUser] = useState<MandiriUser | null>(null);
   const [templates, setTemplates] = useState<SuratTemplate[]>([]);
   const [permohonan, setPermohonan] = useState<PermohonanSurat[]>([]);
@@ -501,6 +546,73 @@ export default function App({ initialData, initialRoute }: AppProps = {}) {
     void restoreSession();
   }, [restoreSession, sessionChecked, tab]);
 
+  useEffect(() => {
+    if (route !== "ppid" || ppid) return;
+    let active = true;
+    apiGet<PPIDPublicData>("/public/ppid")
+      .then((data) => {
+        if (active) setPpid(data);
+      })
+      .catch((loadError) => {
+        if (active) setNotice(loadError instanceof Error ? loadError.message : "Profil PPID belum bisa dimuat.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [ppid, route]);
+
+  useEffect(() => {
+    if (publications || !["profil", "pemerintah-desa", "struktur-organisasi", "apbdes", "perencanaan", "program", "produk-hukum", "data-desa", "mobil-siaga", "darurat"].includes(route)) return;
+    let active = true;
+    apiGet<PublicationCatalog>("/public/publications")
+      .then((data) => {
+        if (active) setPublications(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [publications, route]);
+
+  useEffect(() => {
+    if (route !== "apbdes" || budget) return;
+    let active = true;
+    apiGet<BudgetData>(`/public/budget?year=${new Date().getFullYear()}`)
+      .then((data) => {
+        if (active) setBudget(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [budget, route]);
+
+  useEffect(() => {
+    if ((route !== "darurat" && route !== "mobil-siaga") || emergency) return;
+    let active = true;
+    apiGet<EmergencyData>("/public/emergency")
+      .then((data) => {
+        if (active) setEmergency(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [emergency, route]);
+
+  useEffect(() => {
+    if (route !== "laporan-ppid" || ppidReport) return;
+    let active = true;
+    apiGet<PPIDReport>("/public/ppid/report")
+      .then((data) => {
+        if (active) setPpidReport(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [ppidReport, route]);
+
   const statMap = useMemo(() => {
     return new Map(ringkasan?.statistik.map((item) => [item.key, item]) ?? []);
   }, [ringkasan]);
@@ -552,26 +664,43 @@ export default function App({ initialData, initialRoute }: AppProps = {}) {
     openPublicRoute(target);
   }, [goPortal, openDtksDashboard, openPublicRoute]);
 
-  useRouteMetadata(route, villageName);
+  useRouteMetadata(route, villageName, dipDetail);
   const activeBottomTab = bottomTabForRoute(route, tab);
 
   if (route === "dtks") {
     return <DtksDashboardPage dtks={dtks} location={location} onBack={() => goPortal("home")} villageName={villageName} />;
   }
 
+  if (route === "admin-ppid") {
+    return <PPIDAdminPage onBack={() => openPublicRoute("ppid")} villageName={villageName} />;
+  }
+
+  if (route === "admin-ppid-layanan") {
+    return <PPIDServicesAdminPage villageName={villageName} />;
+  }
+
+  if (route === "admin-dip") {
+    return <DIPAdminPage villageName={villageName} />;
+  }
+
   return (
-    <main className="min-h-screen bg-[#f3f6f2] text-slate-950 md:py-4">
-      <section className="relative mx-auto min-h-dvh w-full max-w-[425px] overflow-x-hidden bg-[#f8faf7] md:min-h-[calc(100dvh-32px)] md:rounded-[26px] md:border md:border-slate-200 md:shadow-[0_18px_48px_rgba(15,23,42,0.10)]">
-        <div className="px-4 pb-28 pt-4 max-[375px]:px-3">
+    <main className="min-h-screen bg-cream-50 text-civic-text md:py-4">
+      <section className="relative mx-auto min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-cream-50 md:min-h-[calc(100dvh-32px)] md:rounded-civic-xl md:border md:border-civic-border md:shadow-civic-md">
+        <div className="px-4 pb-24 pt-4">
           {route === "portal" && tab === "home" ? (
-            <HomeTop location={location} onNavigate={navigateMenu} villageName={villageName} />
+            <HomeTop
+              location={location}
+              logoUrl={ringkasan?.profil.logoUrl}
+              onOpenServices={() => setDrawer("services")}
+              villageName={villageName}
+            />
           ) : (
             <VillageHeader villageName={villageName} location={location} logoUrl={ringkasan?.profil.logoUrl} />
           )}
 
           {notice ? (
             <button
-              className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-900"
+              className="mt-4 w-full rounded-2xl border border-civic-warning/30 bg-civic-warning-bg px-4 py-3 text-left text-sm font-medium text-civic-warning"
               onClick={() => setNotice(null)}
             >
               {notice}
@@ -586,7 +715,13 @@ export default function App({ initialData, initialRoute }: AppProps = {}) {
               onBack={() => goPortal("home")}
               onNavigate={navigateMenu}
               onNotice={setNotice}
+              budget={budget}
+              emergency={emergency}
               pembangunan={pembangunan}
+              ppid={ppid}
+              ppidReport={ppidReport}
+              dip={dip}
+              publications={publications}
               program={program}
               ringkasan={ringkasan}
               route={route}
@@ -595,13 +730,17 @@ export default function App({ initialData, initialRoute }: AppProps = {}) {
             />
           ) : null}
 
+          {route === "dip-detail" ? <DIPDetailPage item={dipDetail} /> : null}
+
           {route === "portal" && tab === "home" ? (
             <HomeScreen
               artikel={artikel}
               dtks={dtks}
+              location={location}
               onNavigate={navigateMenu}
-              program={program}
+              ringkasan={ringkasan}
               statMap={statMap}
+              villageName={villageName}
             />
           ) : null}
           {route === "portal" && tab === "services" ? (
@@ -649,125 +788,166 @@ function VillageHeader({
   logoUrl: string | null | undefined;
 }) {
   return (
-    <header className="flex items-center justify-between gap-3">
+    <header className="flex h-14 items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
         <img
           src={logoUrl ?? "/yamansari-mark.svg"}
-          alt="Lambang desa"
-          className="h-11 w-11 shrink-0 rounded-xl border border-emerald-100 bg-white object-contain p-1 shadow-sm"
+          alt={`Lambang Desa ${villageName}`}
+          className="h-10 w-10 shrink-0 rounded-civic-sm border border-civic-border bg-civic-surface object-contain p-1 shadow-civic-sm"
         />
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Portal Desa</p>
-          <h1 className="truncate text-[22px] font-bold leading-tight tracking-normal text-slate-950">Desa {villageName}</h1>
-          <p className="truncate text-[13px] font-semibold leading-snug text-slate-500">{location}</p>
+          <h1 className="truncate text-xl font-bold leading-6 text-village-800">Desa {villageName}</h1>
+          <p className="truncate text-[13px] leading-5 text-civic-muted">{location}</p>
         </div>
       </div>
-      <button className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-emerald-700 shadow-sm" aria-label="Notifikasi">
+      <a className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-md border border-civic-border bg-civic-surface text-village-800 shadow-civic-sm" href="/pengumuman" aria-label="Buka pengumuman desa">
         <Bell size={20} />
-        <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">3</span>
-      </button>
+      </a>
     </header>
   );
 }
 
 function HomeTop({
   location,
-  onNavigate,
+  logoUrl,
+  onOpenServices,
   villageName,
 }: {
   location: string;
-  onNavigate: (target: MenuTarget) => void;
+  logoUrl: string | null | undefined;
+  onOpenServices: () => void;
   villageName: string;
 }) {
   return (
-    <header className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-emerald-700">Desa Digital</p>
-          <h1 className="mt-1 truncate text-[30px] font-bold leading-none tracking-normal text-slate-950 max-[375px]:text-[27px]">{villageName}</h1>
-          <p className="mt-2 truncate text-[14px] font-semibold text-slate-500">{location}</p>
-        </div>
-        <button className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white text-emerald-700 shadow-sm" aria-label="Notifikasi">
-          <Bell size={20} />
-          <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">3</span>
-        </button>
-      </div>
-
-      <section className="rounded-[28px] bg-emerald-800 p-4 text-white shadow-sm">
-        <div className="flex items-start justify-between gap-3">
+    <div>
+      <header className="flex h-14 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <img
+            src={logoUrl ?? "/yamansari-mark.svg"}
+            alt={`Lambang Desa ${villageName}`}
+            className="h-10 w-10 shrink-0 rounded-civic-sm border border-civic-border bg-civic-surface object-contain p-1 shadow-civic-sm"
+          />
           <div className="min-w-0">
-            <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-emerald-100">Layanan Desa</p>
-            <h2 className="mt-2 max-w-[260px] text-[24px] font-bold leading-tight tracking-normal max-[375px]:text-[22px]">
-              Urus informasi desa tanpa datang ke kantor
-            </h2>
+            <h1 className="truncate text-xl font-bold leading-6 text-village-800">Desa {villageName}</h1>
+            <p className="truncate text-[13px] leading-5 text-civic-muted">{location}</p>
           </div>
-          <span className="shrink-0 rounded-full bg-white/14 px-3 py-1 text-[11px] font-bold text-white">2025</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-3 text-[13px] font-bold text-emerald-800" onClick={() => onNavigate("pengaduan")}>
-            Pengaduan <ChevronRight size={17} />
-          </button>
-          <button className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-3 text-[13px] font-bold text-white ring-1 ring-white/18" onClick={() => onNavigate("profil")}>
-            Profil Desa <ChevronRight size={17} />
+        <button
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-md border border-civic-border bg-civic-surface text-village-800 shadow-civic-sm"
+          onClick={onOpenServices}
+          aria-label="Buka menu layanan"
+        >
+          <Menu size={22} />
+        </button>
+      </header>
+
+      <section className="relative mt-4 h-[240px] overflow-hidden rounded-civic-xl border border-civic-border bg-civic-surface shadow-civic-sm">
+        <img
+          src={HERO_IMAGE}
+          srcSet={HERO_IMAGE_SRCSET}
+          sizes={HERO_IMAGE_SIZES}
+          alt={`Pemandangan Desa ${villageName}`}
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+          fetchPriority="high"
+          height={270}
+          width={480}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/10" />
+        <div className="relative z-10 flex h-full max-w-[76%] flex-col justify-center p-5">
+          <p className="text-sm leading-[22px] text-civic-text">Selamat datang di</p>
+          <h2 className="mt-1 text-[32px] font-bold leading-10 text-village-900">Desa {villageName}</h2>
+          <p className="mt-2 text-sm leading-[22px] text-civic-muted">Layanan dan informasi desa dalam satu akses yang mudah.</p>
+          <button
+            className="mt-4 inline-flex h-11 w-fit items-center gap-2 rounded-civic-sm bg-village-800 px-4 text-sm font-semibold text-white transition-colors hover:bg-village-900 active:bg-village-950"
+            onClick={onOpenServices}
+          >
+            Jelajahi Layanan <ChevronRight size={17} />
           </button>
         </div>
       </section>
-    </header>
+    </div>
   );
 }
 
 function HomeScreen({
   artikel,
   dtks,
+  location,
   onNavigate,
-  program,
+  ringkasan,
   statMap,
+  villageName,
 }: {
   artikel: Artikel[];
   dtks: Dtks | null;
+  location: string;
   onNavigate: (target: MenuTarget) => void;
-  program: ProgramBantuan[];
+  ringkasan: Ringkasan;
   statMap: Map<string, { value: number; label: string }>;
+  villageName: string;
 }) {
   return (
-    <div className="mt-5 space-y-6">
+    <div className="mt-6 space-y-6">
       <ServicesGrid onNavigate={onNavigate} />
+      <ImportantInfoCard onNavigate={onNavigate} />
+      <section>
+        <SectionHeader title="Jadwal Kegiatan" onClick={() => onNavigate("pengumuman")} />
+        <div className="mt-3"><AgendaCard /></div>
+      </section>
+      <section>
+        <SectionHeader title="Berita Desa" onClick={() => onNavigate("berita")} />
+        <div className="mt-3"><NewsList items={artikel.slice(0, 2)} /></div>
+      </section>
       <QuickInfo statMap={statMap} dtks={dtks} />
-      <SectionHeader title="Berita Terbaru" onClick={() => onNavigate("berita")} />
-      <NewsList items={artikel.slice(0, 2)} />
-      <SectionHeader title="Agenda Desa" onClick={() => onNavigate("pengumuman")} />
-      <AgendaCard />
-      <HelpCard primaryProgram={program[0]} />
+      <ContactFooter location={location} ringkasan={ringkasan} villageName={villageName} />
     </div>
+  );
+}
+
+function ImportantInfoCard({ onNavigate }: { onNavigate: (target: MenuTarget) => void }) {
+  const announcement = dummyAnnouncements[0];
+
+  return (
+    <section className="civic-card bg-civic-soft p-4">
+      <div className="flex items-center gap-4">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-civic-md bg-village-800 text-white">
+          <Bell size={28} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold leading-6 text-village-800">Informasi Penting</h2>
+            <span className="rounded-full bg-village-100 px-2 py-0.5 text-[11px] font-semibold text-village-800">Baru</span>
+          </div>
+          <p className="mt-1 line-clamp-1 text-sm font-semibold leading-5 text-civic-text">{announcement.title}</p>
+          <p className="mt-1 text-xs leading-[18px] text-civic-muted">{announcement.date}</p>
+        </div>
+        <button className="hidden h-10 shrink-0 items-center rounded-civic-sm bg-village-800 px-4 text-sm font-semibold text-white min-[420px]:inline-flex" onClick={() => onNavigate("pengumuman")}>
+          Detail
+        </button>
+      </div>
+    </section>
   );
 }
 
 function ServicesGrid({ onNavigate }: { onNavigate: (target: MenuTarget) => void }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[18px] font-bold leading-tight text-slate-950">Layanan Utama</h2>
-          <p className="mt-1 text-xs font-semibold text-slate-500">Akses cepat untuk kebutuhan warga</p>
-        </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">Publik</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {serviceItems.map((item) => {
+    <section>
+      <SectionHeader title="Layanan Cepat" />
+      <div className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
+        {serviceItems.slice(0, 6).map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.label}
-              className="flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 text-left transition active:scale-[0.99]"
+              className="civic-card min-h-[124px] min-w-[112px] snap-start p-3 text-left transition-colors hover:bg-village-50 active:bg-village-100"
               onClick={() => onNavigate(item.target)}
             >
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass(item.tone)}`}>
-                <Icon size={21} strokeWidth={2.2} />
+              <span className="grid h-11 w-11 place-items-center rounded-civic-md bg-village-100 text-village-700">
+                <Icon size={28} strokeWidth={2} />
               </span>
-              <span className="min-w-0">
-                <span className="block text-[13px] font-bold leading-tight text-slate-950">{item.label}</span>
-                <span className="mt-1 block text-[11px] font-semibold leading-tight text-slate-500">{serviceCopy[item.label]}</span>
-              </span>
+              <span className="mt-3 block text-[13px] font-semibold leading-[18px] text-civic-text">{item.label}</span>
+              <span className="mt-1 block line-clamp-2 text-[11px] leading-4 text-civic-muted">{serviceCopy[item.label]}</span>
             </button>
           );
         })}
@@ -779,32 +959,49 @@ function ServicesGrid({ onNavigate }: { onNavigate: (target: MenuTarget) => void
 function QuickInfo({ statMap, dtks }: { statMap: Map<string, { value: number; label: string }>; dtks: Dtks | null }) {
   const stats = [
     { key: "penduduk_aktif" as StatKey, label: "Penduduk", value: statValue(statMap, "penduduk_aktif"), unit: "Jiwa", icon: UsersRound, tone: "green" },
-    { key: "keluarga" as StatKey, label: "Keluarga", value: statValue(statMap, "keluarga"), unit: "KK", icon: UsersRound, tone: "blue" },
-    { key: "wilayah" as StatKey, label: "RT/RW", value: statValue(statMap, "wilayah"), unit: "Wilayah", icon: Building2, tone: "orange" },
+    { key: "keluarga" as StatKey, label: "Keluarga", value: statValue(statMap, "keluarga"), unit: "KK", icon: UsersRound, tone: "green" },
+    { key: "wilayah" as StatKey, label: "RT/RW", value: statValue(statMap, "wilayah"), unit: "Wilayah", icon: Building2, tone: "green" },
     { key: "dtks" as StatKey, label: "DTKS", value: dtks?.ruta ?? statValue(statMap, "dtks"), unit: "Ruta", icon: CircleDollarSign, tone: "green" },
   ];
 
   return (
     <section>
-      <SectionHeader title="Info Cepat" />
+      <SectionHeader title="Statistik Desa" />
       <div className="mt-3 grid grid-cols-2 gap-3">
         {stats.map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.key} className="flex min-h-[88px] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass(item.tone)}`}>
-                <Icon size={21} />
+            <article key={item.key} className="civic-card min-h-[112px] p-4">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-village-100 text-village-700">
+                <Icon size={20} />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-[12px] font-semibold text-slate-500">{item.label}</p>
-                <strong className="mt-1 block text-[20px] font-bold leading-none text-slate-950">{formatNumber(item.value)}</strong>
-                <span className="mt-1 block text-[11px] font-bold text-emerald-700">{item.unit}</span>
-              </div>
+              <strong className="mt-3 block text-xl font-bold leading-6 text-civic-text">{formatNumber(item.value)}</strong>
+              <p className="mt-1 text-xs leading-[18px] text-civic-muted">{item.label} · {item.unit}</p>
             </article>
           );
         })}
       </div>
     </section>
+  );
+}
+
+function ContactFooter({ location, ringkasan, villageName }: { location: string; ringkasan: Ringkasan; villageName: string }) {
+  const phone = ringkasan.profil.kontak.telepon ?? "0283 619 2025";
+  const email = ringkasan.profil.kontak.email ?? "pemdes@yamansari.desa.id";
+
+  return (
+    <footer className="-mx-4 bg-village-800 px-4 py-4 text-white">
+      <div className="grid gap-3 text-xs leading-[18px]">
+        <div className="flex gap-2">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>Desa {villageName}<br />{location}<br />Jawa Tengah</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <a className="flex min-h-11 items-center gap-2" href={`tel:${phone.replace(/[^\d+]/g, "")}`}><PhoneCall className="h-4 w-4 shrink-0" /> {phone}</a>
+          <a className="flex min-h-11 items-center gap-2 break-all" href={`mailto:${email}`}><Send className="h-4 w-4 shrink-0" /> {email}</a>
+        </div>
+      </div>
+    </footer>
   );
 }
 
@@ -866,12 +1063,18 @@ function InfoScreen({
 
 function PublicFeaturePage({
   artikel,
+  budget,
   dtks,
+  dip,
+  emergency,
   location,
   onBack,
   onNavigate,
   onNotice,
   pembangunan,
+  ppid,
+  ppidReport,
+  publications,
   program,
   ringkasan,
   route,
@@ -879,12 +1082,18 @@ function PublicFeaturePage({
   villageName,
 }: {
   artikel: Artikel[];
+  budget?: BudgetData;
   dtks: Dtks | null;
+  dip?: DIPListPayload;
+  emergency?: EmergencyData;
   location: string;
   onBack: () => void;
   onNavigate: (target: MenuTarget) => void;
   onNotice: (message: string | null) => void;
   pembangunan: Pembangunan[];
+  ppid: PPIDPublicData | null;
+  ppidReport?: PPIDReport;
+  publications?: PublicationCatalog;
   program: ProgramBantuan[];
   ringkasan: Ringkasan;
   route: PublicRouteKey;
@@ -896,29 +1105,35 @@ function PublicFeaturePage({
 
   return (
     <div className="mt-5 space-y-5">
-      <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-        <button className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-slate-100 px-3 text-sm font-bold text-slate-700" onClick={onBack}>
+      <section className="civic-card p-4">
+        <button className="inline-flex min-h-11 items-center gap-2 rounded-civic-sm bg-civic-soft px-3 text-sm font-semibold text-civic-text" onClick={onBack}>
           <ArrowLeft size={17} /> Beranda
         </button>
         <div className="mt-4 flex items-start gap-4">
-          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${toneClass(page.tone)}`}>
+          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-civic-md ${toneClass(page.tone)}`}>
             <Icon size={24} />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">{page.eyebrow}</p>
-            <h2 className="mt-1 text-[25px] font-bold leading-tight tracking-normal text-slate-950">{page.title}</h2>
-            <p className="mt-2 text-[14px] font-semibold leading-6 text-slate-600">Desa {villageName} - {page.description}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-village-700">{page.eyebrow}</p>
+            <h2 className="mt-1 text-[28px] font-bold leading-9 text-civic-text">{page.title}</h2>
+            <p className="mt-2 text-sm leading-[22px] text-civic-muted">Desa {villageName} - {page.description}</p>
           </div>
         </div>
       </section>
 
       <PublicRouteContent
         artikel={artikel}
+        budget={budget}
         dtks={dtks}
+        dip={dip}
+        emergency={emergency}
         location={location}
         onNavigate={onNavigate}
         onNotice={onNotice}
         pembangunan={pembangunan}
+        ppid={ppid}
+        ppidReport={ppidReport}
+        publications={publications}
         program={program}
         ringkasan={ringkasan}
         route={route}
@@ -930,22 +1145,34 @@ function PublicFeaturePage({
 
 function PublicRouteContent({
   artikel,
+  budget,
   dtks,
+  dip,
+  emergency,
   location,
   onNavigate,
   onNotice,
   pembangunan,
+  ppid,
+  ppidReport,
+  publications,
   program,
   ringkasan,
   route,
   statMap,
 }: {
   artikel: Artikel[];
+  budget?: BudgetData;
   dtks: Dtks | null;
+  dip?: DIPListPayload;
+  emergency?: EmergencyData;
   location: string;
   onNavigate: (target: MenuTarget) => void;
   onNotice: (message: string | null) => void;
   pembangunan: Pembangunan[];
+  ppid: PPIDPublicData | null;
+  ppidReport?: PPIDReport;
+  publications?: PublicationCatalog;
   program: ProgramBantuan[];
   ringkasan: Ringkasan;
   route: PublicRouteKey;
@@ -980,6 +1207,9 @@ function PublicRouteContent({
               <MiniInfo label="Website" value={website} />
             </div>
           </Panel>
+          <Panel title="Dokumen Profil">
+            <PublicationDocuments catalog={publications} types={["profile"]} empty="Dokumen profil desa belum tersedia." />
+          </Panel>
         </>
       );
     case "pemerintah-desa":
@@ -989,7 +1219,7 @@ function PublicRouteContent({
             icon={Building2}
             title="Pemerintah Desa"
             copy="Daftar perangkat desa, wilayah tugas, kontak pelayanan, dan kanal administrasi warga."
-            tone="blue"
+            tone="green"
           />
           <Panel title="Perangkat Desa">
             {dummyOfficials.slice(0, 3).map((item) => <OfficialRow key={item.role} item={item} />)}
@@ -998,33 +1228,37 @@ function PublicRouteContent({
             <LargeService title="Layanan Mandiri" copy="Masuk untuk mengajukan surat dan melihat arsip layanan warga." icon={FileText} onClick={() => onNavigate("account")} />
             <LargeService title="Struktur Organisasi" copy="Lihat susunan organisasi pemerintah desa." icon={UsersRound} onClick={() => onNavigate("struktur-organisasi")} />
           </Panel>
+          <Panel title="Dokumen Pemerintah Desa">
+            <PublicationDocuments catalog={publications} types={["profile", "governance_report"]} empty="Dokumen pemerintah desa belum tersedia." />
+          </Panel>
         </>
       );
     case "struktur-organisasi":
       return (
-        <Panel title="Struktur Organisasi">
-          {dummyOfficials.map((item) => <OfficialRow key={item.role} item={item} />)}
-        </Panel>
+        <>
+          <Panel title="Struktur Organisasi">
+            {dummyOfficials.map((item) => <OfficialRow key={item.role} item={item} />)}
+          </Panel>
+          <Panel title="Dokumen Struktur">
+            <PublicationDocuments catalog={publications} types={["profile"]} empty="Dokumen struktur organisasi belum tersedia." />
+          </Panel>
+        </>
       );
     case "apbdes":
       return (
         <>
-          <Panel title="Ringkasan Anggaran">
-            <div className="grid grid-cols-2 gap-3">
-              <MiniInfo label="APBDes" value={rupiah(dummyBudgetRows[0].value)} />
-              <MiniInfo label="Realisasi" value={rupiah(dummyBudgetRows[1].value)} />
-              <MiniInfo label="Tahun Anggaran" value="2025" />
-              <MiniInfo label="Sumber" value="OpenSID Keuangan" />
-            </div>
+          <BudgetSummary budget={budget} />
+          <Panel title="Dokumen APBDes">
+            <PublicationDocuments catalog={publications} types={["budget"]} empty="Dokumen APBDes dan realisasi belum tersedia." />
           </Panel>
-          <Panel title="Realisasi Per Bidang">
-            {dummyBudgetRows.map((item) => <BudgetRow key={item.label} item={item} />)}
-          </Panel>
-          <DocumentList title="Publikasi APBDes" copy="Dokumen anggaran desa, penjabaran APBDes, dan ringkasan realisasi untuk warga." icon={WalletCards} items={[dummyLawDocs[0], dummyLawDocs[1]]} />
         </>
       );
     case "perencanaan":
-      return <DocumentList title="Dokumen RPJMDes & RKPDes" copy="Rencana pembangunan jangka menengah, rencana kerja tahunan, dan daftar usulan kegiatan desa." icon={BookOpen} items={dummyPlanningDocs} />;
+      return (
+        <Panel title="Dokumen RPJMDes & RKPDes">
+          <PublicationDocuments catalog={publications} types={["planning", "meeting"]} empty="Dokumen perencanaan belum tersedia." />
+        </Panel>
+      );
     case "program":
       return (
         <>
@@ -1034,30 +1268,32 @@ function PublicRouteContent({
           <Panel title="Pembangunan Desa">
             {displayPembangunan.slice(0, 4).map((item) => <DevelopmentRow key={item.id} item={item} />)}
           </Panel>
+          <Panel title="Dokumen Program">
+            <PublicationDocuments catalog={publications} types={["program", "bumdes"]} empty="Dokumen program dan BUM Desa belum tersedia." />
+          </Panel>
         </>
       );
     case "produk-hukum":
-      return <DocumentList title="Produk Hukum Desa" copy="Peraturan desa, peraturan kepala desa, dan keputusan kepala desa yang berlaku." icon={Scale} items={dummyLawDocs} />;
-    case "ppid":
       return (
-        <>
-          <PublicInfoCard icon={ShieldCheck} title="PPID Desa" copy="Profil PPID, alur permohonan informasi, register layanan, dan kontak pengelola informasi publik." tone="green" />
-          <Panel title="Profil PPID">
-            <div className="grid grid-cols-1 gap-3">
-              {dummyPpidServices.map((item) => <MiniInfo key={item.label} label={item.label} value={item.value} />)}
-            </div>
-          </Panel>
-          <Panel title="Permohonan Informasi">
-            <LargeService title="Ajukan Pengaduan atau Permohonan" copy="Gunakan kanal pengaduan untuk permintaan awal, lalu perangkat desa dapat menindaklanjuti." icon={MessageCircle} onClick={() => onNavigate("pengaduan")} />
-          </Panel>
-        </>
+        <Panel title="Produk Hukum Desa">
+          <PublicationDocuments catalog={publications} types={["legal", "contract"]} empty="Produk hukum desa belum tersedia." />
+        </Panel>
       );
+    case "ppid":
+      return <PPIDPublicPage data={ppid} onNavigate={onNavigate} />;
     case "dip":
-      return <DocumentList title="Daftar Informasi Publik" copy="Informasi berkala, tersedia setiap saat, serta merta, dan informasi yang dikecualikan." icon={FileArchive} items={dummyDipItems} />;
+      return <DIPListPage initialData={dip} />;
+    case "permohonan-informasi":
+      return <InformationRequestPage />;
+    case "keberatan-informasi":
+      return <InformationObjectionPage />;
+    case "laporan-ppid":
+      return <PPIDReportPage report={ppidReport} />;
     case "data-desa":
       return (
         <>
           <QuickInfo statMap={statMap} dtks={displayDtks} />
+          <PublicationCoveragePanel catalog={publications} />
           <Panel title="DTKS Agregat">
             <div className="grid grid-cols-2 gap-3">
               <MiniInfo label="Ruta DTKS" value={formatNumber(displayDtks.ruta)} />
@@ -1104,54 +1340,170 @@ function PublicRouteContent({
     case "mobil-siaga":
       return (
         <>
-          <EmergencyContact phone={phone} title="Mobil Siaga Desa" copy="Nomor resmi mobil siaga akan mengikuti data kontak publik desa atau kurasi khusus Yamansari." />
+          <EmergencyPublicPage data={emergency} />
           <Panel title="Kapan digunakan?">
-            <div className="space-y-2 text-sm font-semibold leading-6 text-slate-600">
+            <div className="space-y-2 text-sm font-semibold leading-6 text-civic-muted">
               <p>Transportasi warga sakit, rujukan fasilitas kesehatan, dan kondisi darurat yang membutuhkan koordinasi perangkat desa.</p>
               <p>Informasi layanan memuat pengemudi piket, wilayah layanan, jam aktif, dan nomor yang dapat dihubungi.</p>
             </div>
-          </Panel>
-          <Panel title="Kontak Piket">
-            {dummyEmergencyContacts.map((item) => <ContactRow key={item.label} item={item} />)}
           </Panel>
         </>
       );
     case "darurat":
       return (
         <>
-          <PublicInfoCard icon={Siren} title="Informasi Darurat" copy="Gunakan nomor desa, mobil siaga, atau perangkat wilayah terdekat untuk kondisi mendesak." tone="red" />
-          <EmergencyContact phone={phone} title="Kontak Cepat" copy="Kontak ini akan diperbarui dari data publik desa dan konfigurasi mobil siaga." />
-          <Panel title="Nomor Penting">
-            {dummyEmergencyContacts.map((item) => <ContactRow key={item.label} item={item} />)}
+          <EmergencyPublicPage data={emergency} />
+          <Panel title="Dokumen Darurat">
+            <PublicationDocuments catalog={publications} types={["emergency"]} empty="Dokumen prosedur darurat belum tersedia." />
           </Panel>
         </>
       );
   }
 }
 
+function PPIDPublicPage({ data, onNavigate }: { data: PPIDPublicData | null; onNavigate: (target: MenuTarget) => void }) {
+  if (!data) {
+    return <LoadingState compact />;
+  }
+
+  const { documents, officials, profile } = data;
+  if (!profile.isPublished) {
+    return <PublicInfoCard icon={ShieldCheck} title="Profil PPID belum dipublikasikan" copy="Pengelola desa sedang menyiapkan profil dan standar layanan informasi publik." tone="green" />;
+  }
+  const telHref = profile.phone ? `tel:${profile.phone.replace(/[^\d+]/g, "")}` : undefined;
+  const emailHref = profile.email ? `mailto:${profile.email}` : undefined;
+
+  return (
+    <>
+      {data.isSample ? (
+        <div className="flex items-start gap-3 rounded-civic-md border border-civic-warning/30 bg-civic-warning-bg px-4 py-3 text-civic-warning-ink" role="status">
+          <span className="shrink-0 rounded-full bg-civic-warning-ink px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-white">Contoh</span>
+          <p className="text-xs font-semibold leading-5">Data dan dokumen pada halaman ini masih contoh, belum ditetapkan sebagai informasi resmi Desa Yamansari.</p>
+        </div>
+      ) : null}
+
+      <Panel title="Pejabat Pengelola Informasi">
+        <div className="space-y-3">
+          {officials.length ? officials.map((official) => (
+            <article key={`${official.role}-${official.id}`} className="flex items-start gap-3 rounded-civic-md border border-civic-border-soft bg-civic-soft p-3.5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-sm bg-village-100 text-village-700">
+                <ShieldCheck size={21} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-village-700">{official.role}</p>
+                <h3 className="mt-1 break-words text-[15px] font-bold leading-5 text-civic-text">{official.name || "Belum ditetapkan"}</h3>
+                <p className="mt-1 text-xs font-semibold leading-5 text-civic-muted">{official.position || "Jabatan belum tersedia"}</p>
+              </div>
+            </article>
+          )) : <Empty text="Pejabat PPID belum ditetapkan." />}
+        </div>
+      </Panel>
+
+      <Panel title="Standar Layanan">
+        <div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+          <MiniInfo label="Meja layanan" value={profile.serviceAddress} />
+          <MiniInfo label="Jadwal" value={profile.serviceSchedule} />
+          <MiniInfo label="Biaya" value={profile.feePolicy} />
+          <MiniInfo label="Tenggat jawaban" value={`${profile.responseDays} hari kerja + perpanjangan ${profile.extensionDays} hari kerja`} />
+        </div>
+      </Panel>
+
+      <article className="civic-card bg-village-50 p-4">
+        <span className="grid h-12 w-12 place-items-center rounded-civic-md bg-village-100 text-village-700">
+          <CheckCircle2 size={23} />
+        </span>
+        <h2 className="mt-4 text-lg font-bold leading-6 text-civic-text">Maklumat Pelayanan</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-civic-muted">{profile.serviceCommitment}</p>
+      </article>
+
+      <Panel title="Tugas & Wewenang">
+        <div className="space-y-3 text-sm font-medium leading-6 text-civic-muted">
+          <p className="rounded-civic-sm bg-civic-soft px-3.5 py-3">Menghimpun, mendokumentasikan, menyediakan, dan melayani informasi publik desa secara akurat dan mudah dijangkau.</p>
+          <p className="rounded-civic-sm bg-civic-soft px-3.5 py-3">Mengoordinasikan pengujian konsekuensi, pemutakhiran daftar informasi, serta jawaban atas permintaan informasi sesuai ketentuan.</p>
+        </div>
+      </Panel>
+
+      <Panel title="Dokumen Fondasi">
+        <div className="space-y-3">
+          {documents.length ? documents.map((document) => {
+            const content = (
+              <>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-sm bg-village-100 text-village-700">
+                  <FileText size={21} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="break-words text-sm font-bold leading-5 text-civic-text">{document.title}</span>
+                    {document.isSample ? <span className="rounded-full bg-civic-warning-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-civic-warning-ink">Contoh</span> : null}
+                  </span>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-civic-muted">{document.category}{document.publishedAt ? ` · ${document.publishedAt}` : ""}</span>
+                </span>
+                {document.url ? <ExternalLink className="shrink-0 text-village-700" size={18} aria-hidden="true" /> : null}
+              </>
+            );
+
+            return document.url ? (
+              <a key={document.id} className="flex min-h-16 items-center gap-3 rounded-civic-md border border-civic-border-soft bg-civic-surface p-3.5 transition hover:border-village-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-village-100" href={document.url} target="_blank" rel="noreferrer">
+                {content}
+              </a>
+            ) : (
+              <div key={document.id} className="flex min-h-16 items-center gap-3 rounded-civic-md border border-civic-border-soft bg-civic-soft p-3.5">
+                {content}
+              </div>
+            );
+          }) : <Empty text="Dokumen fondasi PPID belum dipublikasikan." />}
+        </div>
+      </Panel>
+
+      <Panel title="Layanan PPID">
+        <LargeService title="Permohonan Informasi" copy="Ajukan informasi publik dan simpan token pelacakan." icon={FileText} onClick={() => onNavigate("permohonan-informasi")} />
+        <LargeService title="Keberatan Informasi" copy="Ajukan keberatan bila jawaban belum sesuai prosedur." icon={Scale} onClick={() => onNavigate("keberatan-informasi")} />
+        <LargeService title="Laporan PPID" copy="Lihat ringkasan layanan, tenggat, dan publikasi informasi." icon={ListChecks} onClick={() => onNavigate("laporan-ppid")} />
+      </Panel>
+
+      <article className="civic-card p-4">
+        <h2 className="text-lg font-bold leading-6 text-civic-text">Hubungi Desk PPID</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-civic-muted">Gunakan kontak resmi berikut untuk menanyakan ketersediaan informasi dan tata cara layanan.</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 min-[375px]:grid-cols-2">
+          {telHref ? (
+            <a className="inline-flex min-h-11 items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-4 py-3 text-sm font-semibold text-white" href={telHref}>
+              <PhoneCall size={18} /> Telepon
+            </a>
+          ) : null}
+          {emailHref ? (
+            <a className="inline-flex min-h-11 items-center justify-center gap-2 rounded-civic-sm border border-civic-border bg-civic-surface px-4 py-3 text-sm font-semibold text-village-800" href={emailHref}>
+              <Mail size={18} /> Email
+            </a>
+          ) : null}
+        </div>
+      </article>
+    </>
+  );
+}
+
 function PublicInfoCard({ copy, icon: Icon, title, tone }: { copy: string; icon: typeof Home; title: string; tone: string }) {
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <span className={`grid h-11 w-11 place-items-center rounded-xl ${toneClass(tone)}`}>
+    <article className="civic-card p-4">
+      <span className={`grid h-12 w-12 place-items-center rounded-civic-md ${toneClass(tone)}`}>
         <Icon size={22} />
       </span>
-      <h2 className="mt-4 text-[19px] font-bold leading-tight text-slate-950">{title}</h2>
-      <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{copy}</p>
+      <h2 className="mt-4 text-lg font-bold leading-6 text-civic-text">{title}</h2>
+      <p className="mt-2 text-sm leading-[22px] text-civic-muted">{copy}</p>
     </article>
   );
 }
 
 function OfficialRow({ item }: { item: (typeof dummyOfficials)[number] }) {
   return (
-    <article className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+    <article className="flex items-start gap-3 rounded-2xl border border-civic-border-soft bg-civic-soft p-3.5">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-village-100 text-village-700">
         <UsersRound size={20} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold leading-snug text-slate-950">{item.role}</p>
-        <p className="mt-1 text-[15px] font-bold leading-snug text-emerald-700">{item.name}</p>
-        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.area}</p>
-        <p className="mt-2 text-xs font-bold text-slate-600">{item.phone}</p>
+        <p className="text-sm font-bold leading-snug text-civic-text">{item.role}</p>
+        <p className="mt-1 text-[15px] font-bold leading-snug text-village-700">{item.name}</p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-civic-muted">{item.area}</p>
+        <p className="mt-2 text-xs font-bold text-civic-muted">{item.phone}</p>
       </div>
     </article>
   );
@@ -1159,18 +1511,18 @@ function OfficialRow({ item }: { item: (typeof dummyOfficials)[number] }) {
 
 function BudgetRow({ item }: { item: (typeof dummyBudgetRows)[number] }) {
   return (
-    <article className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+    <article className="rounded-2xl border border-civic-border-soft bg-civic-soft p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-[15px] font-bold leading-snug text-slate-950">{item.label}</h3>
-          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.note}</p>
+          <h3 className="text-[15px] font-bold leading-snug text-civic-text">{item.label}</h3>
+          <p className="mt-1 text-xs font-semibold leading-5 text-civic-muted">{item.note}</p>
         </div>
-        <strong className="shrink-0 text-sm font-bold text-emerald-700">{item.percent}%</strong>
+        <strong className="shrink-0 text-sm font-bold text-village-700">{item.percent}%</strong>
       </div>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
-        <div className="h-full rounded-full bg-emerald-600" style={{ width: `${item.percent}%` }} />
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-civic-surface">
+        <div className="h-full rounded-full bg-village-600" style={{ width: `${item.percent}%` }} />
       </div>
-      <p className="mt-3 text-[15px] font-bold text-slate-950">{rupiah(item.value)}</p>
+      <p className="mt-3 text-[15px] font-bold text-civic-text">{rupiah(item.value)}</p>
     </article>
   );
 }
@@ -1188,11 +1540,11 @@ function DocumentList({
 }) {
   return (
     <Panel title={title}>
-      <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-emerald-700">
+      <div className="flex gap-3 rounded-2xl border border-village-100 bg-village-50 p-3.5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-civic-surface text-village-700">
           <Icon size={21} />
         </span>
-        <p className="text-sm font-semibold leading-6 text-emerald-900">{copy}</p>
+        <p className="text-sm font-semibold leading-6 text-village-900">{copy}</p>
       </div>
       {items.map((item) => <DocumentRow key={`${item.category}-${item.title}`} item={item} />)}
     </Panel>
@@ -1201,42 +1553,42 @@ function DocumentList({
 
 function DocumentRow({ item }: { item: { title: string; category: string; date: string; status: string } }) {
   return (
-    <article className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+    <article className="flex items-center justify-between gap-3 rounded-2xl border border-civic-border-soft bg-civic-soft p-3.5">
       <div className="min-w-0">
-        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">{item.category}</span>
-        <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{item.title}</h3>
-        <p className="mt-1 text-xs font-semibold text-slate-500">{item.date}</p>
+        <span className="inline-flex rounded-full bg-village-100 px-2.5 py-1 text-xs font-bold text-village-700">{item.category}</span>
+        <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-civic-text">{item.title}</h3>
+        <p className="mt-1 text-xs font-semibold text-civic-muted">{item.date}</p>
       </div>
-      <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">{item.status}</span>
+      <span className="shrink-0 rounded-full bg-civic-surface px-3 py-1 text-xs font-bold text-civic-muted">{item.status}</span>
     </article>
   );
 }
 
 function AnnouncementRow({ item }: { item: (typeof dummyAnnouncements)[number] }) {
   return (
-    <article className="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+    <article className="rounded-2xl border border-civic-border-soft bg-civic-soft p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">{item.category}</span>
-          <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{item.title}</h3>
+          <span className="inline-flex rounded-full bg-village-100 px-2.5 py-1 text-xs font-bold text-village-700">{item.category}</span>
+          <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-civic-text">{item.title}</h3>
         </div>
-        <span className="shrink-0 text-xs font-bold text-slate-500">{item.date}</span>
+        <span className="shrink-0 text-xs font-bold text-civic-muted">{item.date}</span>
       </div>
-      <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{item.copy}</p>
+      <p className="mt-3 text-sm font-semibold leading-6 text-civic-muted">{item.copy}</p>
     </article>
   );
 }
 
 function ContactRow({ item }: { item: (typeof dummyEmergencyContacts)[number] }) {
   return (
-    <article className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+    <article className="flex items-start gap-3 rounded-2xl border border-civic-border-soft bg-civic-soft p-3.5">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-village-100 text-village-700">
         <PhoneCall size={20} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-950">{item.label}</p>
-        <p className="mt-1 text-[15px] font-bold text-emerald-700">{item.value}</p>
-        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{item.note}</p>
+        <p className="text-sm font-bold text-civic-text">{item.label}</p>
+        <p className="mt-1 text-[15px] font-bold text-village-700">{item.value}</p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-civic-muted">{item.note}</p>
       </div>
     </article>
   );
@@ -1247,13 +1599,13 @@ function ProgramRow({ item }: { item: ProgramBantuan }) {
   const description = cleanPublicText(item.deskripsi ?? item.sasaran.label);
 
   return (
-    <article className="rounded-2xl bg-slate-50 p-4">
+    <article className="rounded-2xl bg-civic-soft p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{title}</h3>
-          <p className="mt-1 text-sm font-semibold text-slate-500">{description}</p>
+          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-civic-text">{title}</h3>
+          <p className="mt-1 text-sm font-semibold text-civic-muted">{description}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">{item.status}</span>
+        <span className="shrink-0 rounded-full bg-village-100 px-3 py-1 text-xs font-bold text-village-700">{item.status}</span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <MiniInfo label="Peserta" value={formatNumber(item.jumlahPeserta)} />
@@ -1282,26 +1634,26 @@ function ComplaintForm({ onNotice }: { onNotice: (message: string | null) => voi
   }
 
   return (
-    <form className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" onSubmit={submit}>
-      <h2 className="text-xl font-bold tracking-normal text-slate-950">Kirim Pengaduan</h2>
-      <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">Isi laporan singkat. Data ini diteruskan lewat BFF ke Go API internal.</p>
-      <label className="mt-4 block text-sm font-bold text-slate-700">
+    <form className="civic-card p-4" onSubmit={submit}>
+      <h2 className="text-lg font-bold leading-6 text-civic-text">Kirim Pengaduan</h2>
+      <p className="mt-1 text-sm leading-[22px] text-civic-muted">Sampaikan laporan secara jelas agar perangkat desa dapat menindaklanjuti.</p>
+      <label className="mt-4 block text-sm font-semibold text-civic-text">
         Nama
-        <input className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" value={form.nama} onChange={(event) => setForm((current) => ({ ...current, nama: event.target.value }))} required />
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={form.nama} onChange={(event) => setForm((current) => ({ ...current, nama: event.target.value }))} required />
       </label>
-      <label className="mt-3 block text-sm font-bold text-slate-700">
+      <label className="mt-3 block text-sm font-semibold text-civic-text">
         Nomor HP
-        <input className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" inputMode="tel" value={form.telepon} onChange={(event) => setForm((current) => ({ ...current, telepon: event.target.value }))} />
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" inputMode="tel" value={form.telepon} onChange={(event) => setForm((current) => ({ ...current, telepon: event.target.value }))} />
       </label>
-      <label className="mt-3 block text-sm font-bold text-slate-700">
+      <label className="mt-3 block text-sm font-semibold text-civic-text">
         Judul
-        <input className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" value={form.judul} onChange={(event) => setForm((current) => ({ ...current, judul: event.target.value }))} />
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={form.judul} onChange={(event) => setForm((current) => ({ ...current, judul: event.target.value }))} />
       </label>
-      <label className="mt-3 block text-sm font-bold text-slate-700">
+      <label className="mt-3 block text-sm font-semibold text-civic-text">
         Isi Pengaduan
-        <textarea className="mt-2 min-h-28 w-full rounded-2xl border border-slate-200 px-4 py-3 text-base outline-none focus:border-emerald-600" value={form.isi} onChange={(event) => setForm((current) => ({ ...current, isi: event.target.value }))} required />
+        <textarea className="civic-control mt-2 min-h-28 w-full px-4 py-3 text-base outline-none focus:border-village-600" value={form.isi} onChange={(event) => setForm((current) => ({ ...current, isi: event.target.value }))} required />
       </label>
-      <button className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-60" disabled={busy}>
+      <button className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 text-base font-semibold text-white transition-colors hover:bg-village-900 disabled:opacity-50" disabled={busy}>
         {busy ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Kirim Pengaduan
       </button>
     </form>
@@ -1313,29 +1665,267 @@ function EmergencyContact({ copy, phone, title }: { copy: string; phone: string;
   const waHref = phone ? `https://wa.me/${phone.replace(/[^\d]/g, "")}` : undefined;
 
   return (
-    <article className="rounded-[24px] border border-emerald-100 bg-emerald-50/70 p-5">
-      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+    <article className="civic-card bg-civic-soft p-4">
+      <span className="grid h-14 w-14 place-items-center rounded-civic-md bg-village-100 text-village-700">
         <PhoneCall size={28} />
       </span>
-      <h2 className="mt-4 text-[21px] font-bold leading-tight text-slate-950">{title}</h2>
-      <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{copy}</p>
+      <h2 className="mt-4 text-[21px] font-bold leading-tight text-civic-text">{title}</h2>
+      <p className="mt-2 text-sm leading-[22px] text-civic-muted">{copy}</p>
       <div className="mt-4 grid grid-cols-2 gap-3">
         {telHref ? (
-          <a className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 text-sm font-bold text-white" href={telHref}>
+          <a className="inline-flex h-12 items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-4 text-sm font-semibold text-white" href={telHref}>
             <PhoneCall size={18} /> Telepon
           </a>
         ) : (
-          <span className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-4 text-sm font-bold text-slate-400">Telepon</span>
+          <span className="inline-flex h-12 items-center justify-center rounded-civic-sm bg-civic-surface px-4 text-sm font-semibold text-civic-subtle">Telepon</span>
         )}
         {waHref ? (
-          <a className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-bold text-emerald-700" href={waHref} target="_blank" rel="noreferrer">
+          <a className="inline-flex h-12 items-center justify-center gap-2 rounded-civic-sm border border-civic-border bg-civic-surface px-4 text-sm font-semibold text-village-800" href={waHref} target="_blank" rel="noreferrer">
             <MessageCircle size={18} /> WhatsApp
           </a>
         ) : (
-          <span className="inline-flex h-12 items-center justify-center rounded-2xl bg-white px-4 text-sm font-bold text-slate-400">WhatsApp</span>
+          <span className="inline-flex h-12 items-center justify-center rounded-civic-sm bg-civic-surface px-4 text-sm font-semibold text-civic-subtle">WhatsApp</span>
         )}
       </div>
     </article>
+  );
+}
+
+function PPIDAdminPage({ onBack, villageName }: { onBack: () => void; villageName: string }) {
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [data, setData] = useState<AdminPPIDPayload | null>(null);
+  const [profile, setProfile] = useState<PPIDProfile | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loginForm, setLoginForm] = useState({ username: "admin", password: "" });
+
+  const loadAdminData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiGet<AdminPPIDPayload>("/admin/ppid");
+      setData(response);
+      setProfile(response.profile);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Data PPID admin belum bisa dimuat.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    restoreAdminSession()
+      .then(async (user) => {
+        if (!mounted) return;
+        setAdmin(user);
+        await loadAdminData();
+      })
+      .catch(() => {
+        if (mounted) setAdmin(null);
+      })
+      .finally(() => {
+        if (mounted) setAuthChecked(true);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [loadAdminData]);
+
+  function updateProfile<K extends keyof PPIDProfile>(key: K, value: PPIDProfile[K]) {
+    setProfile((current) => current ? { ...current, [key]: value } : current);
+  }
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setActionLoading("login");
+    setError(null);
+    setMessage(null);
+    try {
+      const user = await loginAdmin(loginForm);
+      setAdmin(user);
+      setMessage("Login admin berhasil.");
+      await loadAdminData();
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "Login admin gagal.");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleLogout() {
+    setActionLoading("logout");
+    try {
+      await logoutAdmin();
+    } catch {
+      // UI tetap dibersihkan ketika session upstream sudah kedaluwarsa.
+    } finally {
+      setAdmin(null);
+      setData(null);
+      setProfile(null);
+      setActionLoading(null);
+      setMessage("Session admin ditutup.");
+    }
+  }
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!profile || !data?.canEdit) return;
+    setActionLoading("save");
+    setError(null);
+    setMessage(null);
+    try {
+      const updated = await apiPost<PPIDPublicData>("/admin/ppid", profile);
+      setProfile(updated.profile);
+      setData((current) => current ? { ...current, ...updated } : current);
+      setMessage("Profil dan standar layanan PPID tersimpan.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Profil PPID belum bisa disimpan.");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function seedSample() {
+    setActionLoading("seed");
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await apiPost<AdminPPIDSeedResult>("/admin/ppid/seed-sample", {});
+      setMessage(`Data contoh siap: ${result.documentsCreated} dokumen dibuat, ${result.documentsUpdated} diperbarui.`);
+      await loadAdminData();
+    } catch (seedError) {
+      setError(seedError instanceof Error ? seedError.message : "Data contoh PPID belum bisa dibuat.");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  const shell = (children: ReactNode) => (
+    <main className="min-h-screen bg-cream-50 text-civic-text md:py-6">
+      <section className="relative mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-cream-50 md:rounded-civic-xl md:border md:border-civic-border md:shadow-civic-md">
+        <div className="px-4 pb-12 pt-5">{children}</div>
+      </section>
+    </main>
+  );
+
+  if (!authChecked) {
+    return shell(
+      <>
+        <AdminPageHeader admin={null} onBack={onBack} onLogout={handleLogout} section="Admin PPID" villageName={villageName} />
+        <LoadingState />
+      </>,
+    );
+  }
+
+  if (!admin) {
+    return shell(
+      <>
+        <AdminPageHeader admin={null} onBack={onBack} onLogout={handleLogout} section="Admin PPID" villageName={villageName} />
+        <section className="civic-card mt-8 bg-village-50 p-5">
+          <div className="grid h-14 w-14 place-items-center rounded-civic-md bg-village-700 text-white"><ShieldCheck size={28} /></div>
+          <h2 className="mt-5 text-[28px] font-bold leading-tight text-civic-text">Login pengelola PPID</h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-civic-muted">Masuk dengan akun admin OpenSID untuk mengatur profil dan standar layanan PPID.</p>
+        </section>
+        <form className="mt-5 space-y-4" onSubmit={handleLogin}>
+          <AdminLoginFields form={loginForm} onChange={setLoginForm} />
+          {error ? <StatusNotice tone="error" text={error} /> : null}
+          <button className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 text-sm font-semibold text-white shadow-civic-sm disabled:opacity-50" disabled={actionLoading === "login"} type="submit">
+            {actionLoading === "login" ? <Loader2 className="animate-spin" size={18} /> : <LogIn size={18} />} Masuk Dashboard
+          </button>
+        </form>
+      </>,
+    );
+  }
+
+  return shell(
+    <>
+      <AdminPageHeader admin={admin} onBack={onBack} onLogout={handleLogout} section="Admin PPID" villageName={villageName} />
+      <section className="civic-card mt-6 p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-village-100 px-3 py-1.5 text-xs font-bold text-village-800">Profil layanan</span>
+          {data?.isSample ? <span className="rounded-full bg-civic-warning-bg px-3 py-1.5 text-xs font-bold text-civic-warning-ink">Contoh</span> : null}
+          {data && !data.canEdit ? <span className="rounded-full bg-civic-danger-bg px-3 py-1.5 text-xs font-bold text-civic-danger">Baca saja</span> : null}
+        </div>
+        <h2 className="mt-4 text-[26px] font-bold leading-tight text-civic-text">Profil PPID Desa</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-civic-muted">Pejabat mengikuti data pamong OpenSID. Berkas tetap dikelola melalui modul Informasi Publik OpenSID.</p>
+      </section>
+
+      {message ? <StatusNotice tone="success" text={message} /> : null}
+      {error ? <StatusNotice tone="error" text={error} /> : null}
+      {loading || !profile || !data ? <LoadingState /> : (
+        <>
+          <form className="mt-6 space-y-5" onSubmit={saveProfile}>
+            <Panel title="Pejabat PPID">
+              <div className="space-y-4">
+                <AdminSelect label="Atasan PPID" value={profile.supervisorPamongId} options={data.pamongOptions} disabled={!data.canEdit} onChange={(value) => updateProfile("supervisorPamongId", value)} />
+                <AdminSelect label="PPID" value={profile.ppidPamongId} options={data.pamongOptions} disabled={!data.canEdit} onChange={(value) => updateProfile("ppidPamongId", value)} />
+                <AdminSelect label="Petugas layanan" value={profile.serviceOfficerPamongId} options={data.pamongOptions} disabled={!data.canEdit} onChange={(value) => updateProfile("serviceOfficerPamongId", value)} />
+              </div>
+            </Panel>
+
+            <Panel title="Meja Layanan">
+              <div className="space-y-4">
+                <AdminTextField label="Alamat meja layanan" value={profile.serviceAddress} disabled={!data.canEdit} required onChange={(value) => updateProfile("serviceAddress", value)} />
+                <AdminTextField label="Jadwal layanan" value={profile.serviceSchedule} disabled={!data.canEdit} required onChange={(value) => updateProfile("serviceSchedule", value)} />
+                <div className="grid grid-cols-1 gap-4 min-[390px]:grid-cols-2">
+                  <AdminTextField label="Telepon" value={profile.phone} disabled={!data.canEdit} inputMode="tel" onChange={(value) => updateProfile("phone", value)} />
+                  <AdminTextField label="Email" value={profile.email} disabled={!data.canEdit} type="email" onChange={(value) => updateProfile("email", value)} />
+                </div>
+                <AdminTextArea label="Kebijakan biaya" value={profile.feePolicy} disabled={!data.canEdit} required onChange={(value) => updateProfile("feePolicy", value)} />
+                <AdminTextArea label="Maklumat singkat" value={profile.serviceCommitment} disabled={!data.canEdit} required onChange={(value) => updateProfile("serviceCommitment", value)} />
+                <div className="grid grid-cols-2 gap-4">
+                  <AdminNumberField label="Jawaban (hari)" value={profile.responseDays} disabled={!data.canEdit} min={1} max={30} onChange={(value) => updateProfile("responseDays", value)} />
+                  <AdminNumberField label="Perpanjangan" value={profile.extensionDays} disabled={!data.canEdit} min={0} max={14} onChange={(value) => updateProfile("extensionDays", value)} />
+                </div>
+                <div className="space-y-3 rounded-civic-md bg-civic-soft p-3.5">
+                  <AdminCheckbox label="Tampilkan profil kepada publik" checked={profile.isPublished} disabled={!data.canEdit} onChange={(checked) => updateProfile("isPublished", checked)} />
+                  <AdminCheckbox label="Tandai sebagai data contoh" checked={profile.isSample} disabled={!data.canEdit} onChange={(checked) => updateProfile("isSample", checked)} />
+                </div>
+              </div>
+            </Panel>
+
+            <button className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 py-3 text-sm font-semibold text-white shadow-civic-sm disabled:opacity-50" disabled={!data.canEdit || actionLoading === "save"} type="submit">
+              {actionLoading === "save" ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Simpan Profil PPID
+            </button>
+          </form>
+
+          <section className="mt-7">
+            <SectionHeader title="Dokumen Informasi Publik" action={`${data.documents.length} dokumen`} />
+            <div className="mt-3 space-y-3">
+              {data.documents.length ? data.documents.map((document) => (
+                <article key={document.id} className="rounded-civic-md border border-civic-border bg-civic-surface p-4 shadow-civic-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-sm bg-village-100 text-village-700"><FileText size={21} /></span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words text-sm font-bold leading-5 text-civic-text">{document.title}</h3>
+                      <p className="mt-1 text-xs font-semibold leading-5 text-civic-muted">{document.category}{document.isSample ? " · Contoh" : ""}</p>
+                    </div>
+                    {document.url ? <a className="grid h-11 w-11 shrink-0 place-items-center rounded-civic-sm bg-civic-soft text-village-700" href={document.url} target="_blank" rel="noreferrer" aria-label={`Buka ${document.title}`}><ExternalLink size={18} /></a> : null}
+                  </div>
+                </article>
+              )) : <Empty text="Belum ada dokumen PPID yang terbit." />}
+            </div>
+            <a className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-civic-sm border border-civic-border bg-civic-surface px-4 py-3 text-center text-sm font-semibold text-village-800" href={data.openSidAdminUrl} target="_blank" rel="noreferrer">
+              <ExternalLink size={18} /> Kelola Dokumen di OpenSID
+            </a>
+          </section>
+
+          {data.sampleAvailable ? (
+            <section className="mt-7 rounded-civic-lg border border-civic-warning/30 bg-civic-warning-bg p-4">
+              <h2 className="text-base font-bold text-civic-text">Data contoh lokal</h2>
+              <p className="mt-1 text-sm font-medium leading-6 text-civic-muted">Seed aman dijalankan ulang dan tidak membuat dokumen ganda.</p>
+              <button className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-civic-sm bg-civic-warning px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" disabled={!data.canEdit || actionLoading === "seed"} onClick={() => void seedSample()} type="button">
+                {actionLoading === "seed" ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />} Isi Empat Dokumen Contoh
+              </button>
+            </section>
+          ) : null}
+        </>
+      )}
+    </>,
   );
 }
 
@@ -1380,19 +1970,12 @@ function DtksDashboardPage({
     let mounted = true;
     async function restoreAdmin() {
       try {
-        const me = await apiGet<{ user: AdminUser }>("/admin/me");
+        const user = await restoreAdminSession();
         if (!mounted) return;
-        setAdmin(me.user);
+        setAdmin(user);
         await loadAdminData();
       } catch {
-        try {
-          const refreshed = await apiPost<{ user: AdminUser }>("/admin/auth/refresh", undefined, false);
-          if (!mounted) return;
-          setAdmin(refreshed.user);
-          await loadAdminData();
-        } catch {
-          if (mounted) setAdmin(null);
-        }
+        if (mounted) setAdmin(null);
       } finally {
         if (mounted) setAuthChecked(true);
       }
@@ -1408,9 +1991,9 @@ function DtksDashboardPage({
   const finalCount = Math.max(0, items.length - draftCount);
   const metrics = [
     { label: "Ruta DTKS", value: summary.ruta, unit: "Ruta", tone: "green", icon: Home },
-    { label: "Anggota", value: summary.anggota, unit: "Jiwa", tone: "blue", icon: UsersRound },
-    { label: "Draft", value: draftCount, unit: "Data", tone: "orange", icon: FileText },
-    { label: "Final", value: finalCount, unit: "Data", tone: "purple", icon: CheckCircle2 },
+    { label: "Anggota", value: summary.anggota, unit: "Jiwa", tone: "green", icon: UsersRound },
+    { label: "Draft", value: draftCount, unit: "Data", tone: "green", icon: FileText },
+    { label: "Final", value: finalCount, unit: "Data", tone: "green", icon: CheckCircle2 },
   ];
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -1419,8 +2002,8 @@ function DtksDashboardPage({
     setError(null);
     setMessage(null);
     try {
-      const response = await apiPost<{ user: AdminUser }>("/admin/auth/masuk", loginForm, false);
-      setAdmin(response.user);
+      const user = await loginAdmin(loginForm);
+      setAdmin(user);
       setMessage("Login admin berhasil.");
       await loadAdminData();
     } catch (loginError) {
@@ -1433,7 +2016,7 @@ function DtksDashboardPage({
   async function handleLogout() {
     setActionLoading("logout");
     try {
-      await apiPost<{ loggedOut: boolean }>("/admin/auth/keluar");
+      await logoutAdmin();
     } catch {
       // Session lokal tetap dibersihkan agar admin tidak tersangkut di UI.
     } finally {
@@ -1494,8 +2077,8 @@ function DtksDashboardPage({
   }
 
   const shell = (children: ReactNode) => (
-    <main className="min-h-screen bg-slate-100 text-slate-950 md:py-6">
-      <section className="relative mx-auto min-h-screen w-full max-w-[425px] overflow-x-hidden bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] md:rounded-[26px] md:border md:border-white">
+    <main className="min-h-screen bg-cream-50 text-civic-text md:py-6">
+      <section className="relative mx-auto min-h-screen w-full max-w-[430px] overflow-x-hidden bg-cream-50 md:rounded-civic-xl md:border md:border-civic-border md:shadow-civic-md">
         {children}
       </section>
     </main>
@@ -1503,8 +2086,8 @@ function DtksDashboardPage({
 
   if (!authChecked) {
     return shell(
-      <div className="px-4 pb-10 pt-5 max-[375px]:px-3">
-        <DtksAdminHeader admin={null} onBack={onBack} onLogout={handleLogout} villageName={villageName} />
+      <div className="px-4 pb-10 pt-5">
+        <AdminPageHeader admin={null} onBack={onBack} onLogout={handleLogout} section="Admin DTKS" villageName={villageName} />
         <LoadingState />
       </div>,
     );
@@ -1512,32 +2095,32 @@ function DtksDashboardPage({
 
   if (!admin) {
     return shell(
-      <div className="flex min-h-screen flex-col px-4 pb-10 pt-5 max-[375px]:px-3">
-        <DtksAdminHeader admin={null} onBack={onBack} onLogout={handleLogout} villageName={villageName} />
-        <section className="mt-8 rounded-[26px] border border-emerald-100 bg-emerald-50/70 p-5">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-700 text-white">
+      <div className="flex min-h-screen flex-col px-4 pb-10 pt-5">
+        <AdminPageHeader admin={null} onBack={onBack} onLogout={handleLogout} section="Admin DTKS" villageName={villageName} />
+        <section className="civic-card mt-8 bg-village-50 p-5">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-village-700 text-white">
             <ShieldCheck size={28} />
           </div>
-          <h2 className="mt-5 text-[28px] font-bold leading-tight text-slate-950">Login admin DTKS</h2>
-          <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
-            Halaman ini khusus pengelola desa. Data detail hanya dibuka setelah session admin valid.
+          <h2 className="mt-5 text-[28px] font-bold leading-tight text-civic-text">Login admin DTKS</h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-civic-muted">
+            Halaman ini khusus pengelola desa. Masuk untuk membuka dan mengelola detail DTKS.
           </p>
         </section>
 
         <form className="mt-5 space-y-4" onSubmit={handleLogin}>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Username</span>
+            <span className="text-sm font-bold text-civic-text">Username</span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base font-semibold text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              className="civic-control mt-2 h-12 w-full px-4 text-base font-semibold outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100"
               autoComplete="username"
               value={loginForm.username}
               onChange={(event) => setLoginForm((current) => ({ ...current, username: event.target.value }))}
             />
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Password</span>
+            <span className="text-sm font-bold text-civic-text">Password</span>
             <input
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base font-semibold text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+              className="civic-control mt-2 h-12 w-full px-4 text-base font-semibold outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100"
               type="password"
               autoComplete="current-password"
               value={loginForm.password}
@@ -1546,7 +2129,7 @@ function DtksDashboardPage({
           </label>
           {error ? <StatusNotice tone="error" text={error} /> : null}
           <button
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(15,138,67,0.22)] disabled:opacity-60"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 text-sm font-semibold text-white shadow-civic-sm disabled:opacity-50"
             disabled={actionLoading === "login"}
             type="submit"
           >
@@ -1555,19 +2138,16 @@ function DtksDashboardPage({
           </button>
         </form>
 
-        <p className="mt-auto pt-8 text-center text-xs font-semibold leading-5 text-slate-400">
-          Metadata halaman: noindex, nofollow, noarchive.
-        </p>
       </div>,
     );
   }
 
   return (
     shell(
-      <div className="px-4 pb-10 pt-5 max-[375px]:px-3">
-        <DtksAdminHeader admin={admin} onBack={onBack} onLogout={handleLogout} villageName={villageName} />
+      <div className="px-4 pb-10 pt-5">
+        <AdminPageHeader admin={admin} onBack={onBack} onLogout={handleLogout} section="Admin DTKS" villageName={villageName} />
 
-        <section className="relative mt-6 overflow-hidden rounded-[26px] bg-emerald-800 p-5 text-white shadow-[0_14px_36px_rgba(15,138,67,0.18)]">
+        <section className="relative mt-6 overflow-hidden rounded-civic-xl bg-village-800 p-5 text-white shadow-civic-md">
           <img
             src={HERO_IMAGE}
             srcSet={HERO_IMAGE_SRCSET}
@@ -1579,14 +2159,14 @@ function DtksDashboardPage({
             height={270}
             width={480}
           />
-          <div className="absolute inset-0 bg-emerald-950/75" />
+          <div className="absolute inset-0 bg-village-950/75" />
           <div className="relative">
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold">Admin</span>
-              <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold">{location}</span>
+              <span className="rounded-full bg-civic-surface/15 px-3 py-1.5 text-xs font-bold">Admin</span>
+              <span className="rounded-full bg-civic-surface/15 px-3 py-1.5 text-xs font-bold">{location}</span>
             </div>
             <h2 className="mt-4 max-w-[310px] text-[28px] font-bold leading-tight">Dashboard DTKS Admin</h2>
-            <p className="mt-3 max-w-[300px] text-[15px] font-medium leading-6 text-emerald-50">
+            <p className="mt-3 max-w-[300px] text-[15px] font-medium leading-6 text-village-50">
               Pantau ruta, buka detail keluarga, dan kelola data DTKS desa.
             </p>
           </div>
@@ -1597,7 +2177,7 @@ function DtksDashboardPage({
 
         <section className="mt-7">
           <SectionHeader title="Ringkasan Admin" />
-          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] max-[375px]:-mx-3 max-[375px]:px-3 [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
             {metrics.map((item) => (
               <DtksMetric key={item.label} icon={item.icon} label={item.label} tone={item.tone} unit={item.unit} value={item.value} />
             ))}
@@ -1606,7 +2186,7 @@ function DtksDashboardPage({
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-civic-border bg-civic-surface px-4 text-sm font-bold text-civic-text disabled:opacity-60"
             disabled={loading}
             onClick={() => void loadAdminData()}
           >
@@ -1614,7 +2194,7 @@ function DtksDashboardPage({
             Muat Ulang
           </button>
           <button
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 text-sm font-bold text-white disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-village-700 px-4 text-sm font-bold text-white disabled:opacity-60"
             disabled={actionLoading === "seed"}
             onClick={() => void seedDummy()}
           >
@@ -1627,28 +2207,28 @@ function DtksDashboardPage({
           <SectionHeader title="Daftar Ruta DTKS" action={summary.lastUpdated ? `Update ${summary.lastUpdated}` : undefined} />
           <div className="mt-3 space-y-3">
             {loading ? <LoadingState compact /> : null}
-            {!loading && !items.length ? <Empty text="Belum ada data DTKS. Gunakan Isi Data Awal setelah API dan database aktif." /> : null}
+            {!loading && !items.length ? <Empty text="Belum ada data DTKS." /> : null}
             {items.map((item) => (
               <button
                 key={item.id}
-                className="w-full rounded-[22px] border border-slate-200 bg-white p-4 text-left shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition active:scale-[0.99]"
+                className="w-full rounded-civic-lg border border-civic-border bg-civic-surface p-4 text-left shadow-civic-sm transition active:scale-[0.99]"
                 onClick={() => void openDetail(item)}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-[17px] font-bold leading-tight text-slate-950">{item.kepalaKeluarga || "Kepala keluarga belum tercatat"}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-500">KK {item.noKk || "-"} · {item.anggotaCount} anggota</p>
+                    <p className="truncate text-[17px] font-bold leading-tight text-civic-text">{item.kepalaKeluarga || "Kepala keluarga belum tercatat"}</p>
+                    <p className="mt-1 text-sm font-semibold text-civic-muted">KK {item.noKk || "-"} · {item.anggotaCount} anggota</p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-bold ${item.isDraft ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold ${item.isDraft ? "bg-civic-warning-bg text-civic-warning" : "bg-village-50 text-village-700"}`}>
                     {item.isDraft ? "Draft" : "Final"}
                   </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-500">
+                <div className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold text-civic-muted">
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <MapPin size={16} />
                     <span className="truncate">{wilayahLabel(item)}</span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-emerald-700">
+                  <span className="inline-flex shrink-0 items-center gap-1 text-village-700">
                     {detailLoading === item.id ? <Loader2 className="animate-spin" size={16} /> : <Eye size={16} />}
                     Detail
                   </span>
@@ -1671,40 +2251,139 @@ function DtksDashboardPage({
   );
 }
 
-function DtksAdminHeader({
+function AdminPageHeader({
   admin,
   onBack,
   onLogout,
+  section,
   villageName,
 }: {
   admin: AdminUser | null;
   onBack: () => void;
   onLogout: () => void;
+  section: string;
   villageName: string;
 }) {
   return (
     <header className="flex items-center justify-between gap-3">
-      <button className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-700" onClick={onBack} aria-label="Kembali ke portal">
+      <button className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-civic-border-soft text-civic-text" onClick={onBack} aria-label="Kembali ke portal">
         <ChevronRight className="rotate-180" size={24} />
       </button>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Admin DTKS</p>
-        <h1 className="truncate text-[22px] font-bold leading-tight text-slate-950">Desa {villageName}</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-village-700">{section}</p>
+        <h1 className="truncate text-[22px] font-bold leading-tight text-civic-text">Desa {villageName}</h1>
       </div>
       {admin ? (
-        <button className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-700" onClick={onLogout} aria-label="Keluar admin">
+        <button className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-civic-border-soft text-civic-text" onClick={onLogout} aria-label="Keluar admin">
           <LogOut size={21} />
         </button>
       ) : (
-        <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">Private</span>
+        <span className="rounded-full bg-civic-border-soft px-3 py-1.5 text-xs font-bold text-civic-muted">Private</span>
       )}
     </header>
   );
 }
 
+function AdminLoginFields({
+  form,
+  onChange,
+}: {
+  form: { username: string; password: string };
+  onChange: (value: { username: string; password: string }) => void;
+}) {
+  return (
+    <>
+      <label className="block">
+        <span className="text-sm font-bold text-civic-text">Username</span>
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base font-semibold outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100" autoComplete="username" value={form.username} onChange={(event) => onChange({ ...form, username: event.target.value })} />
+      </label>
+      <label className="block">
+        <span className="text-sm font-bold text-civic-text">Password</span>
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base font-semibold outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100" type="password" autoComplete="current-password" value={form.password} onChange={(event) => onChange({ ...form, password: event.target.value })} />
+      </label>
+    </>
+  );
+}
+
+function AdminSelect({
+  disabled,
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  disabled: boolean;
+  label: string;
+  onChange: (value: number) => void;
+  options: AdminPPIDPayload["pamongOptions"];
+  value: number;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-bold text-civic-text">{label}</span>
+      <select className="civic-control mt-2 min-h-12 w-full px-3 text-sm font-semibold text-civic-text outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100 disabled:opacity-60" disabled={disabled} required value={value} onChange={(event) => onChange(Number(event.target.value))}>
+        <option value={0}>Pilih pamong aktif</option>
+        {options.map((option) => <option key={option.id} value={option.id}>{option.name} - {option.position}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function AdminTextField({
+  disabled,
+  inputMode,
+  label,
+  onChange,
+  required = false,
+  type = "text",
+  value,
+}: {
+  disabled: boolean;
+  inputMode?: "email" | "search" | "tel" | "text" | "url" | "none" | "numeric" | "decimal";
+  label: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: string;
+  value: string;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-bold text-civic-text">{label}</span>
+      <input className="civic-control mt-2 min-h-12 w-full px-4 text-sm font-semibold text-civic-text outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100 disabled:opacity-60" disabled={disabled} inputMode={inputMode} required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function AdminTextArea({ disabled, label, onChange, required = false, value }: { disabled: boolean; label: string; onChange: (value: string) => void; required?: boolean; value: string }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-bold text-civic-text">{label}</span>
+      <textarea className="civic-control mt-2 min-h-28 w-full resize-y px-4 py-3 text-sm font-semibold leading-6 text-civic-text outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100 disabled:opacity-60" disabled={disabled} required={required} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function AdminNumberField({ disabled, label, max, min, onChange, value }: { disabled: boolean; label: string; max: number; min: number; onChange: (value: number) => void; value: number }) {
+  return (
+    <label className="block min-w-0">
+      <span className="block text-sm font-bold leading-5 text-civic-text">{label}</span>
+      <input className="civic-control mt-2 min-h-12 w-full px-3 text-sm font-semibold text-civic-text outline-none transition focus:border-village-500 focus:ring-4 focus:ring-village-100 disabled:opacity-60" disabled={disabled} max={max} min={min} required type="number" value={value} onChange={(event) => onChange(Number(event.target.value))} />
+    </label>
+  );
+}
+
+function AdminCheckbox({ checked, disabled, label, onChange }: { checked: boolean; disabled: boolean; label: string; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold leading-5 text-civic-text">
+      <input className="h-5 w-5 shrink-0 accent-village-700" checked={checked} disabled={disabled} type="checkbox" onChange={(event) => onChange(event.target.checked)} />
+      <span>{label}</span>
+    </label>
+  );
+}
+
 function StatusNotice({ text, tone }: { text: string; tone: "error" | "success" }) {
   return (
-    <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold leading-6 ${tone === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+    <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold leading-6 ${tone === "error" ? "border-civic-danger/30 bg-civic-danger-bg text-civic-danger" : "border-village-100 bg-village-50 text-village-800"}`} role={tone === "error" ? "alert" : "status"}>
       {text}
     </div>
   );
@@ -1732,14 +2411,14 @@ function DtksDetailCard({
   ];
 
   return (
-    <article className="mt-7 rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
+    <article className="mt-7 rounded-civic-xl border border-civic-border bg-civic-surface p-4 shadow-civic-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Detail ruta</p>
-          <h2 className="mt-1 truncate text-xl font-bold leading-tight text-slate-950">{item.kepalaKeluarga || "Kepala keluarga"}</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">KK {item.noKk || "-"} · {wilayahLabel(item)}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-village-700">Detail ruta</p>
+          <h2 className="mt-1 truncate text-xl font-bold leading-tight text-civic-text">{item.kepalaKeluarga || "Kepala keluarga"}</h2>
+          <p className="mt-1 text-sm font-semibold text-civic-muted">KK {item.noKk || "-"} · {wilayahLabel(item)}</p>
         </div>
-        <button className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600" onClick={onClose} aria-label="Tutup detail">
+        <button className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-civic-border-soft text-civic-muted" onClick={onClose} aria-label="Tutup detail">
           <X size={20} />
         </button>
       </div>
@@ -1752,7 +2431,7 @@ function DtksDetailCard({
       </div>
 
       <section className="mt-5">
-        <h3 className="text-sm font-bold text-slate-950">Indikator cepat</h3>
+        <h3 className="text-sm font-bold text-civic-text">Indikator cepat</h3>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {indicators.map((indicator) => (
             <MiniInfo key={indicator.label} label={indicator.label} value={indicator.value} />
@@ -1761,25 +2440,25 @@ function DtksDetailCard({
       </section>
 
       <section className="mt-5">
-        <h3 className="text-sm font-bold text-slate-950">Anggota keluarga</h3>
+        <h3 className="text-sm font-bold text-civic-text">Anggota keluarga</h3>
         <div className="mt-3 space-y-2">
           {detail.anggota.length ? detail.anggota.map((anggota) => (
-            <div key={anggota.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-3">
+            <div key={anggota.id} className="flex items-center justify-between gap-3 rounded-2xl bg-civic-soft px-3 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-950">{anggota.nama || "Nama belum tercatat"}</p>
-                <p className="text-xs font-semibold text-slate-500">{maskNik(anggota.nik)} · {yesNoLabel(anggota.bekerja)}</p>
+                <p className="truncate text-sm font-bold text-civic-text">{anggota.nama || "Nama belum tercatat"}</p>
+                <p className="text-xs font-semibold text-civic-muted">{maskNik(anggota.nik)} · {yesNoLabel(anggota.bekerja)}</p>
               </div>
-              <span className="shrink-0 text-xs font-bold text-emerald-700">{rupiah(anggota.pendapatanSebulan)}</span>
+              <span className="shrink-0 text-xs font-bold text-village-700">{rupiah(anggota.pendapatanSebulan)}</span>
             </div>
           )) : <Empty text="Anggota DTKS belum tercatat" />}
         </div>
       </section>
 
-      {item.catatan ? <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">{item.catatan}</p> : null}
+      {item.catatan ? <p className="mt-4 rounded-2xl bg-civic-warning-bg px-4 py-3 text-sm font-semibold leading-6 text-civic-warning">{item.catatan}</p> : null}
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <button
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 text-sm font-bold text-white disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-village-700 px-4 text-sm font-bold text-white disabled:opacity-60"
           disabled={loading}
           onClick={onToggleStatus}
         >
@@ -1787,7 +2466,7 @@ function DtksDetailCard({
           {item.isDraft ? "Finalkan" : "Jadikan Draft"}
         </button>
         <a
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-civic-border bg-civic-surface px-4 text-sm font-bold text-civic-text"
           href={item.opensidFormUrl}
           target="_blank"
           rel="noreferrer"
@@ -1801,23 +2480,23 @@ function DtksDetailCard({
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
-      <p className="text-xs font-semibold text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-bold leading-snug text-slate-950">{value}</p>
+    <div className="rounded-2xl border border-civic-border-soft bg-civic-soft p-3">
+      <p className="text-xs font-semibold text-civic-muted">{label}</p>
+      <p className="mt-1 break-words text-sm font-bold leading-snug text-civic-text">{value}</p>
     </div>
   );
 }
 
 function DtksMetric({ icon: Icon, label, tone, unit, value }: { icon: typeof Home; label: string; tone: string; unit: string; value: number }) {
   return (
-    <article className="flex h-[95px] min-w-[168px] items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+    <article className="flex h-[95px] min-w-[168px] items-center gap-3 rounded-civic-lg border border-civic-border bg-civic-surface px-3.5 shadow-civic-sm">
       <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${toneClass(tone)}`}>
         <Icon size={24} />
       </span>
       <div>
-        <p className="text-[13px] font-medium text-slate-500">{label}</p>
-        <strong className="mt-1 block text-[21px] font-bold leading-none text-emerald-700">{formatNumber(value)}</strong>
-        <span className="mt-1 block text-[13px] font-medium text-slate-500">{unit}</span>
+        <p className="text-[13px] font-medium text-civic-muted">{label}</p>
+        <strong className="mt-1 block text-[21px] font-bold leading-none text-village-700">{formatNumber(value)}</strong>
+        <span className="mt-1 block text-[13px] font-medium text-civic-muted">{unit}</span>
       </div>
     </article>
   );
@@ -1852,7 +2531,7 @@ function AccountScreen({
 
   return (
     <div className="mt-7 space-y-6">
-      <section className="rounded-[24px] bg-emerald-700 p-5 text-white shadow-[0_10px_26px_rgba(15,138,67,0.18)]">
+      <section className="rounded-civic-xl bg-village-800 p-5 text-white shadow-civic-md">
         <p className="text-sm font-semibold text-white/80">Layanan Mandiri</p>
         <div className="mt-2 flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -1860,7 +2539,7 @@ function AccountScreen({
             <p className="mt-1 text-sm font-medium text-white/80">{maskNik(user.nik)}</p>
           </div>
           <button
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15"
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-civic-md bg-civic-surface/15"
             onClick={async () => {
               await apiPost("/mandiri/auth/keluar", {});
               setUser(null);
@@ -1886,30 +2565,28 @@ function AccountScreen({
 function NewsList({ items }: { items: Artikel[] }) {
   const displayItems = items.length ? items : fallbackArtikel;
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white px-3.5 shadow-sm">
+    <div className="space-y-3">
       {displayItems.map((item, index) => (
-        <article key={item.id} className="grid min-h-[104px] grid-cols-[78px_1fr_22px] items-center gap-3 border-b border-slate-100 py-3 last:border-b-0">
+        <article key={item.id} className="civic-card flex min-h-[96px] gap-3 p-3">
           <img
             src={item.gambarUrl ?? HERO_IMAGE}
             srcSet={item.gambarUrl ? undefined : HERO_IMAGE_SRCSET}
             sizes={item.gambarUrl ? undefined : "80px"}
             alt=""
-            className="h-[72px] w-[78px] rounded-2xl object-cover"
+            className="h-[72px] w-24 shrink-0 rounded-xl object-cover"
             decoding="async"
             height={156}
             loading="lazy"
             width={172}
           />
           <div className="min-w-0">
-            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex rounded-full bg-village-100 px-2 py-0.5 text-[11px] font-medium text-village-800">
               {index % 2 === 0 ? "Pembangunan" : "Pemerintahan"}
             </span>
-            <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{cleanPublicText(item.judul)}</h3>
-            <p className="mt-2 text-[13px] font-medium text-slate-500">{item.tanggal ?? "21 Mei 2025"}</p>
+            <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-civic-text">{cleanPublicText(item.judul)}</h3>
+            <p className="mt-1 text-xs leading-[18px] text-civic-muted">{item.tanggal ?? "21 Mei 2025"}</p>
           </div>
-          <a href={item.url} target="_blank" rel="noreferrer" aria-label={`Buka ${cleanPublicText(item.judul)}`} className="text-slate-600">
-            <ChevronRight size={24} />
-          </a>
+          <a href={item.url} target="_blank" rel="noreferrer" aria-label={`Buka ${cleanPublicText(item.judul)}`} className="ml-auto grid h-11 w-8 shrink-0 place-items-center text-civic-muted"><ChevronRight size={20} /></a>
         </article>
       ))}
     </div>
@@ -1918,41 +2595,16 @@ function NewsList({ items }: { items: Artikel[] }) {
 
 function AgendaCard() {
   return (
-    <article className="flex min-h-[104px] items-center gap-3 rounded-3xl border border-emerald-100 bg-emerald-50/70 p-3.5">
-      <div className="grid h-[72px] w-[64px] shrink-0 place-items-center rounded-2xl bg-white text-center text-emerald-700">
-        <strong className="block text-[25px] leading-none">{fallbackAgenda.date}</strong>
-        <span className="block text-[12px] font-bold uppercase leading-tight">{fallbackAgenda.month}</span>
-        <span className="block text-[12px] font-bold leading-tight">{fallbackAgenda.year}</span>
+    <article className="civic-card flex min-h-[104px] items-center gap-3 p-3">
+      <div className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-village-50 text-village-800">
+        <strong className="text-2xl font-bold leading-6">{fallbackAgenda.date}</strong>
+        <span className="mt-1 text-[11px] font-semibold uppercase leading-3">{fallbackAgenda.month}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-1 text-[17px] font-bold leading-tight text-slate-950">{fallbackAgenda.title}</h3>
-        <p className="mt-2 flex items-center gap-2 text-[14px] font-medium text-slate-500"><MapPin size={17} /> {fallbackAgenda.place}</p>
-        <p className="mt-1 flex items-center gap-2 text-[14px] font-medium text-slate-500"><CalendarDays size={17} /> {fallbackAgenda.time}</p>
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-civic-text">{fallbackAgenda.title}</h3>
+        <p className="mt-2 flex items-center gap-1.5 text-xs leading-[18px] text-civic-muted"><CalendarDays size={14} /> {fallbackAgenda.time}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-xs leading-[18px] text-civic-muted"><MapPin size={14} /> {fallbackAgenda.place}</p>
       </div>
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
-        <CalendarDays size={22} />
-      </span>
-    </article>
-  );
-}
-
-function HelpCard({ primaryProgram }: { primaryProgram: ProgramBantuan | undefined }) {
-  const programName = primaryProgram?.nama ? cleanPublicText(primaryProgram.nama).toLowerCase() : "";
-
-  return (
-    <article className="flex items-center gap-3 rounded-3xl border border-emerald-100 bg-emerald-50/70 p-3.5">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
-        <Headphones size={22} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="text-[17px] font-bold leading-tight text-slate-950">Butuh Bantuan?</h3>
-        <p className="mt-1 text-[14px] font-medium leading-snug text-slate-500">
-          {programName ? `Informasi ${programName} dan layanan desa.` : "Hubungi perangkat desa untuk informasi lebih lanjut."}
-        </p>
-      </div>
-      <a className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-emerald-700 px-3.5 text-[13px] font-bold text-white" href="https://wa.me/" target="_blank" rel="noreferrer">
-        <MessageCircle size={19} /> Hubungi
-      </a>
     </article>
   );
 }
@@ -1985,21 +2637,21 @@ function LoginPanel({
   }
 
   return (
-    <form className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" onSubmit={submit}>
-      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
+    <form className="civic-card p-4" onSubmit={submit}>
+      <span className="grid h-14 w-14 place-items-center rounded-civic-md bg-village-100 text-village-700">
         <ShieldCheck size={30} />
       </span>
-      <h2 className="mt-4 text-2xl font-bold tracking-normal text-slate-950">Masuk Layanan Mandiri</h2>
-      <p className="mt-1 text-sm font-medium leading-6 text-slate-500">Gunakan NIK dan PIN untuk mengurus surat serta melihat arsip layanan.</p>
-      <label className="mt-5 block text-sm font-semibold text-slate-600">
+      <h2 className="mt-4 text-2xl font-bold tracking-normal text-civic-text">Masuk Layanan Mandiri</h2>
+      <p className="mt-1 text-sm leading-[22px] text-civic-muted">Gunakan NIK dan PIN untuk mengurus surat serta melihat arsip layanan.</p>
+      <label className="mt-5 block text-sm font-semibold text-civic-text">
         NIK
-        <input className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" value={nik} onChange={(event) => setNik(event.target.value)} inputMode="numeric" autoComplete="username" />
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={nik} onChange={(event) => setNik(event.target.value)} inputMode="numeric" autoComplete="username" />
       </label>
-      <label className="mt-4 block text-sm font-semibold text-slate-600">
+      <label className="mt-4 block text-sm font-semibold text-civic-text">
         PIN
-        <input className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" value={pin} onChange={(event) => setPin(event.target.value)} type="password" inputMode="numeric" autoComplete="current-password" />
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={pin} onChange={(event) => setPin(event.target.value)} type="password" inputMode="numeric" autoComplete="current-password" />
       </label>
-      <button className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-60" disabled={busy}>
+      <button className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 text-base font-semibold text-white disabled:opacity-50" disabled={busy}>
         {busy ? <Loader2 className="animate-spin" size={18} /> : <LogIn size={18} />} Masuk
       </button>
     </form>
@@ -2048,22 +2700,31 @@ function SuratForm({
   }
 
   return (
-    <form className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]" onSubmit={submit}>
-      <h2 className="text-xl font-bold tracking-normal text-slate-950">Permohonan Surat</h2>
-      <p className="mt-1 text-sm font-medium text-slate-500">{templates.length} template tersedia</p>
-      <select className="mt-4 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base outline-none focus:border-emerald-600" value={idSurat} onChange={(event) => setIdSurat(event.target.value)} required>
+    <form className="civic-card p-4" onSubmit={submit}>
+      <h2 className="text-xl font-bold tracking-normal text-civic-text">Permohonan Surat</h2>
+      <p className="mt-1 text-sm leading-[22px] text-civic-muted">{templates.length} template tersedia</p>
+      <label className="mt-4 block text-sm font-semibold text-civic-text">
+        Jenis surat
+      <select className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={idSurat} onChange={(event) => setIdSurat(event.target.value)} required>
         <option value="">Pilih template</option>
         {templates.map((item) => <option value={item.id} key={item.id}>{item.nama}</option>)}
       </select>
-      <input className="mt-3 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" placeholder="No. HP aktif" value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" required />
-      <textarea className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 text-base outline-none focus:border-emerald-600" placeholder="Keperluan" value={keperluan} onChange={(event) => setKeperluan(event.target.value)} />
-      <input className="mt-3 h-12 w-full rounded-2xl border border-slate-200 px-4 text-base outline-none focus:border-emerald-600" placeholder="Keterangan tambahan" value={keterangan} onChange={(event) => setKeterangan(event.target.value)} />
+      </label>
+      <label className="mt-3 block text-sm font-semibold text-civic-text">Nomor HP aktif
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" required />
+      </label>
+      <label className="mt-3 block text-sm font-semibold text-civic-text">Keperluan
+        <textarea className="civic-control mt-2 min-h-24 w-full px-4 py-3 text-base outline-none focus:border-village-600" value={keperluan} onChange={(event) => setKeperluan(event.target.value)} />
+      </label>
+      <label className="mt-3 block text-sm font-semibold text-civic-text">Keterangan tambahan
+        <input className="civic-control mt-2 h-12 w-full px-4 text-base outline-none focus:border-village-600" value={keterangan} onChange={(event) => setKeterangan(event.target.value)} />
+      </label>
       {selected?.syarat.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
-          {selected.syarat.map((item) => <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700" key={item.id}>{item.nama ?? `Syarat ${item.id}`}: fisik</span>)}
+          {selected.syarat.map((item) => <span className="rounded-full bg-village-50 px-3 py-1.5 text-xs font-semibold text-village-700" key={item.id}>{item.nama ?? `Syarat ${item.id}`}: fisik</span>)}
         </div>
       ) : null}
-      <button className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 text-base font-bold text-white disabled:opacity-60" disabled={busy || !selected}>
+      <button className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-civic-sm bg-village-800 px-5 text-base font-semibold text-white disabled:opacity-50" disabled={busy || !selected}>
         {busy ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Kirim Permohonan
       </button>
     </form>
@@ -2083,16 +2744,16 @@ function PermohonanRow({ item, onChanged, onNotice }: { item: PermohonanSurat; o
 
   const canCancel = item.status.kode === 0 || item.status.kode === 1;
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+    <div className="rounded-2xl border border-civic-border-soft bg-civic-soft p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{item.nama_surat}</h3>
-          <p className="mt-1 text-sm font-medium text-slate-500">{item.created_at}</p>
+          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-civic-text">{item.nama_surat}</h3>
+          <p className="mt-1 text-sm font-medium text-civic-muted">{item.created_at}</p>
         </div>
-        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">{item.status.label}</span>
+        <span className="rounded-full bg-village-100 px-3 py-1 text-xs font-bold text-village-700">{item.status.label}</span>
       </div>
       {canCancel ? (
-        <button className="mt-3 h-10 rounded-xl bg-white px-3 text-sm font-bold text-red-600" onClick={cancel}>Batalkan</button>
+        <button className="mt-3 h-10 rounded-xl bg-civic-surface px-3 text-sm font-bold text-civic-danger" onClick={cancel}>Batalkan</button>
       ) : null}
     </div>
   );
@@ -2100,19 +2761,19 @@ function PermohonanRow({ item, onChanged, onNotice }: { item: PermohonanSurat; o
 
 function ArsipRow({ item }: { item: ArsipSurat }) {
   return (
-    <a className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4" href={item.cetak_url} target="_blank" rel="noreferrer">
+    <a className="flex items-center justify-between gap-3 rounded-2xl border border-civic-border-soft bg-civic-soft p-4" href={item.cetak_url} target="_blank" rel="noreferrer">
       <div className="min-w-0">
-        <h3 className="line-clamp-1 text-[15px] font-bold text-slate-950">{item.nama_surat ?? item.nama_format ?? "Surat"}</h3>
-        <p className="mt-1 text-sm font-medium text-slate-500">{item.no_surat ?? item.tanggal}</p>
+        <h3 className="line-clamp-1 text-[15px] font-bold text-civic-text">{item.nama_surat ?? item.nama_format ?? "Surat"}</h3>
+        <p className="mt-1 text-sm font-medium text-civic-muted">{item.no_surat ?? item.tanggal}</p>
       </div>
-      <ChevronRight size={23} className="shrink-0 text-slate-500" />
+      <ChevronRight size={23} className="shrink-0 text-civic-muted" />
     </a>
   );
 }
 
 function DevelopmentRow({ item }: { item: Pembangunan }) {
   return (
-    <article className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+    <article className="flex gap-3 rounded-2xl border border-civic-border-soft bg-civic-soft p-3">
       <img
         src={item.fotoUrl ?? HERO_IMAGE}
         srcSet={item.fotoUrl ? undefined : HERO_IMAGE_SRCSET}
@@ -2125,9 +2786,9 @@ function DevelopmentRow({ item }: { item: Pembangunan }) {
         width={172}
       />
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-slate-950">{cleanPublicText(item.judul)}</h3>
-        <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-slate-500">{cleanPublicText(item.lokasi ?? item.ringkasan)}</p>
-        <p className="mt-2 text-sm font-bold text-emerald-700">{rupiah(item.anggaran)}</p>
+        <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-civic-text">{cleanPublicText(item.judul)}</h3>
+        <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-civic-muted">{cleanPublicText(item.lokasi ?? item.ringkasan)}</p>
+        <p className="mt-2 text-sm font-bold text-village-700">{rupiah(item.anggaran)}</p>
       </div>
     </article>
   );
@@ -2135,23 +2796,23 @@ function DevelopmentRow({ item }: { item: Pembangunan }) {
 
 function LargeService({ title, copy, icon: Icon, onClick }: { title: string; copy: string; icon: typeof Home; onClick: () => void }) {
   return (
-    <button className="flex w-full items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left" onClick={onClick}>
-      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+    <button className="flex w-full items-center gap-4 rounded-2xl bg-civic-soft p-4 text-left" onClick={onClick}>
+      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-village-100 text-village-700">
         <Icon size={27} />
       </span>
       <span className="min-w-0 flex-1">
-        <strong className="block text-[16px] leading-snug text-slate-950">{title}</strong>
-        <span className="mt-1 block text-sm font-medium leading-snug text-slate-500">{copy}</span>
+        <strong className="block text-[16px] leading-snug text-civic-text">{title}</strong>
+        <span className="mt-1 block text-sm font-medium leading-snug text-civic-muted">{copy}</span>
       </span>
-      <ChevronRight size={23} className="shrink-0 text-slate-500" />
+      <ChevronRight size={23} className="shrink-0 text-civic-muted" />
     </button>
   );
 }
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-[18px] font-bold tracking-normal text-slate-950">{title}</h2>
+    <section className="civic-card space-y-3 p-4">
+      <h2 className="text-lg font-bold leading-6 text-civic-text">{title}</h2>
       {children}
     </section>
   );
@@ -2160,13 +2821,13 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
 function SectionHeader({ action, title, onClick }: { action?: string; title: string; onClick?: () => void }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <h2 className="text-[19px] font-bold leading-tight tracking-normal text-slate-950">{title}</h2>
+      <h2 className="text-lg font-bold leading-6 text-civic-text">{title}</h2>
       {onClick ? (
-        <button className="inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-[13px] font-bold text-emerald-700" onClick={onClick}>
-          Lihat <ChevronRight size={17} />
+        <button className="inline-flex min-h-11 items-center gap-1 rounded-civic-sm px-2 text-sm font-medium text-village-800" onClick={onClick}>
+          Lihat semua <ChevronRight size={16} />
         </button>
       ) : action ? (
-        <span className="text-right text-xs font-semibold leading-4 text-slate-500">{action}</span>
+        <span className="text-right text-xs font-semibold leading-4 text-civic-muted">{action}</span>
       ) : null}
     </div>
   );
@@ -2189,15 +2850,15 @@ function PublicMenuDrawer({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button className="absolute inset-0 bg-slate-950/45" aria-label="Tutup menu" onClick={onClose} />
-      <section className="relative w-full max-w-[425px] rounded-t-[24px] border border-slate-200 bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-[0_-18px_48px_rgba(15,23,42,0.18)] max-[375px]:px-3">
-        <div className="mx-auto h-1.5 w-24 rounded-full bg-slate-300" />
-        <button className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-600" onClick={onClose} aria-label="Tutup drawer">
+      <button className="absolute inset-0 bg-village-950/50" aria-label="Tutup menu" onClick={onClose} />
+      <section className="relative w-full max-w-[430px] rounded-t-civic-xl border border-civic-border bg-civic-surface px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-civic-md">
+        <div className="mx-auto h-1.5 w-24 rounded-full bg-civic-subtle" />
+        <button className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-civic-md bg-civic-soft text-civic-muted" onClick={onClose} aria-label="Tutup drawer">
           <X size={20} />
         </button>
         <div className="mt-5 text-center">
-          <h2 className="text-[18px] font-bold leading-tight text-slate-950">{title}</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">{subtitle}</p>
+          <h2 className="text-[18px] font-bold leading-tight text-civic-text">{title}</h2>
+          <p className="mt-1 text-sm font-semibold text-civic-muted">{subtitle}</p>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-3">
           {items.map((item) => {
@@ -2205,14 +2866,14 @@ function PublicMenuDrawer({
             return (
               <button
                 key={item.label}
-                className="min-h-[92px] rounded-2xl border border-slate-200 bg-slate-50 px-2.5 py-3 text-center transition active:scale-[0.98]"
+                className="min-h-[104px] rounded-civic-lg border border-civic-border bg-civic-soft px-2.5 py-3 text-center transition-colors active:bg-village-100"
                 onClick={() => onNavigate(item.target)}
               >
                 <span className={`mx-auto grid h-10 w-10 place-items-center rounded-xl ${toneClass(item.tone)}`}>
                   <Icon size={21} />
                 </span>
-                <span className="mt-2 block text-[12px] font-bold leading-tight text-slate-950">{item.label}</span>
-                <span className="mt-1 block text-[10px] font-semibold leading-tight text-slate-500">{item.description}</span>
+                <span className="mt-2 block text-[12px] font-bold leading-tight text-civic-text">{item.label}</span>
+                <span className="mt-1 block text-[11px] leading-4 text-civic-muted">{item.description}</span>
               </button>
             );
           })}
@@ -2243,14 +2904,14 @@ function BottomNavigation({
   };
 
   return (
-    <nav className="fixed bottom-3 left-1/2 z-50 w-[calc(100%-20px)] max-w-[405px] -translate-x-1/2 rounded-3xl border border-slate-200 bg-white/96 px-3.5 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_26px_rgba(15,23,42,0.08)] backdrop-blur max-[375px]:w-[calc(100%-16px)] max-[375px]:px-2.5" aria-label="Navigasi bawah">
-      <div className="grid grid-cols-4">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-civic-border bg-civic-surface" aria-label="Navigasi bawah">
+      <div className="mx-auto grid min-h-[72px] max-w-[430px] grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
         {bottomTabs.map((item) => {
           const Icon = item.icon;
           const active = current === item.key;
           return (
-            <button key={item.key} className={`grid min-h-[54px] place-items-center gap-1 rounded-2xl text-[12px] font-semibold ${active ? "bg-emerald-50 text-emerald-700" : "text-slate-500"}`} onClick={actions[item.key]}>
-              <Icon size={22} fill={active ? "currentColor" : "none"} strokeWidth={active ? 2.3 : 2} />
+            <button key={item.key} className={`flex min-h-[72px] flex-col items-center justify-center gap-1 text-[11px] font-medium leading-4 ${active ? "text-village-700" : "text-civic-muted"}`} onClick={actions[item.key]} aria-current={active ? "page" : undefined}>
+              <Icon size={22} strokeWidth={2} />
               <span>{item.label}</span>
             </button>
           );
@@ -2262,18 +2923,22 @@ function BottomNavigation({
 
 function LoadingState({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`grid place-items-center rounded-[22px] border border-slate-200 bg-white text-sm font-semibold text-slate-500 shadow-[0_8px_24px_rgba(15,23,42,0.05)] ${compact ? "min-h-20" : "mt-7 min-h-52"}`}>
+    <div className={`grid place-items-center rounded-civic-lg border border-civic-border bg-civic-surface text-sm font-semibold text-civic-muted shadow-civic-sm ${compact ? "min-h-20" : "mt-7 min-h-52"}`}>
       <span className="inline-flex items-center gap-2"><Loader2 className="animate-spin" size={18} /> Memuat data desa</span>
     </div>
   );
 }
 
 function Empty({ text }: { text: string }) {
-  return <div className="grid min-h-20 place-items-center rounded-2xl bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500">{text}</div>;
+  return <div className="grid min-h-20 place-items-center rounded-2xl bg-civic-soft px-4 text-center text-sm font-semibold text-civic-muted">{text}</div>;
 }
 
 export function routeFromPathname(pathname: string): PageRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === "/admin/ppid") return "admin-ppid";
+  if (path === "/admin/ppid-layanan") return "admin-ppid-layanan";
+  if (path === "/admin/dip") return "admin-dip";
+  if (/^\/dip\/\d+$/.test(path)) return "dip-detail";
   if (path === "/dtks" || path.startsWith("/admin")) return "dtks";
   const key = path.slice(1);
   if (publicRouteSet.has(key)) return key as PublicRouteKey;
@@ -2287,31 +2952,52 @@ function routeFromLocation(): PageRoute {
 
 function routePath(route: PageRoute) {
   if (route === "portal") return "/";
+  if (route === "admin-ppid") return "/admin/ppid";
+  if (route === "admin-ppid-layanan") return "/admin/ppid-layanan";
+  if (route === "admin-dip") return "/admin/dip";
+  if (route === "dip-detail") return typeof window === "undefined" ? "/dip" : window.location.pathname;
   return `/${route}`;
 }
 
 function isPublicRoute(route: PageRoute): route is PublicRouteKey {
-  return route !== "portal" && route !== "dtks";
+  return route !== "portal" && route !== "dtks" && route !== "admin-ppid" && route !== "admin-ppid-layanan" && route !== "admin-dip" && route !== "dip-detail";
 }
 
 function bottomTabForRoute(route: PageRoute, tab: Tab): Tab {
   if (route === "portal") return tab;
-  if (route === "dtks" || route === "pengaduan" || route === "mobil-siaga" || route === "darurat" || route === "program") return "services";
+  if (route === "dtks" || route === "admin-ppid" || route === "admin-ppid-layanan" || route === "admin-dip" || route === "pengaduan" || route === "permohonan-informasi" || route === "keberatan-informasi" || route === "mobil-siaga" || route === "darurat" || route === "program") return "services";
   return "info";
 }
 
-function useRouteMetadata(route: PageRoute, villageName: string) {
+function useRouteMetadata(route: PageRoute, villageName: string, dipDetail?: DIPEntry) {
   useEffect(() => {
     const robots = ensureMeta("robots");
     const description = ensureMeta("description");
     const canonical = ensureCanonical();
 
     const pathname = window.location.pathname;
-    if (route === "dtks" || pathname.startsWith("/admin")) {
-      document.title = `Dashboard DTKS ${villageName}`;
+    if (route === "dtks" || route === "admin-ppid" || route === "admin-ppid-layanan" || route === "admin-dip" || pathname.startsWith("/admin")) {
+      const isPPIDAdmin = route === "admin-ppid" || pathname === "/admin/ppid";
+      const isPPIDServicesAdmin = route === "admin-ppid-layanan" || pathname === "/admin/ppid-layanan";
+      const isDIPAdmin = route === "admin-dip" || pathname === "/admin/dip";
+      document.title = `${isPPIDAdmin ? "Admin PPID" : isPPIDServicesAdmin ? "Admin Layanan PPID" : isDIPAdmin ? "Admin DIP" : "Dashboard DTKS"} ${villageName}`;
       robots.content = "noindex, nofollow, noarchive, noimageindex";
-      description.content = "Dashboard agregat DTKS Desa Yamansari. Halaman ini tidak untuk diindeks mesin pencari.";
-      canonical.href = `${window.location.origin}/dtks`;
+      description.content = isPPIDAdmin
+        ? "Pengaturan privat profil dan standar layanan PPID Desa Yamansari."
+        : isPPIDServicesAdmin
+          ? "Pengelolaan privat permohonan informasi, keberatan, darurat, laporan, dan audit PPID Desa Yamansari."
+        : isDIPAdmin
+          ? "Pengaturan privat metadata Daftar Informasi Publik Desa Yamansari."
+        : "Dashboard agregat DTKS Desa Yamansari. Halaman ini tidak untuk diindeks mesin pencari.";
+      canonical.href = `${window.location.origin}${isPPIDAdmin ? "/admin/ppid" : isPPIDServicesAdmin ? "/admin/ppid-layanan" : isDIPAdmin ? "/admin/dip" : "/dtks"}`;
+      return;
+    }
+
+    if (route === "dip-detail" && dipDetail) {
+      document.title = `${dipDetail.title} | Desa ${villageName}`;
+      robots.content = "index, follow";
+      description.content = dipDetail.summary;
+      canonical.href = `${window.location.origin}${pathname}`;
       return;
     }
 
@@ -2320,7 +3006,7 @@ function useRouteMetadata(route: PageRoute, villageName: string) {
     robots.content = "index, follow";
     description.content = meta.description;
     canonical.href = `${window.location.origin}${meta.canonicalPath}`;
-  }, [route, villageName]);
+  }, [dipDetail, route, villageName]);
 }
 
 function publicRouteMeta(pathname: string, villageName: string) {
@@ -2366,6 +3052,18 @@ function publicRouteMeta(pathname: string, villageName: string) {
     "/dip": {
       title: `Daftar Informasi Publik ${village}`,
       description: `Daftar Informasi Publik yang tersedia untuk warga dan masyarakat ${village}.`,
+    },
+    "/permohonan-informasi": {
+      title: `Permohonan Informasi ${village}`,
+      description: `Form permohonan informasi publik dan pelacakan status PPID ${village}.`,
+    },
+    "/keberatan-informasi": {
+      title: `Keberatan Informasi ${village}`,
+      description: `Form keberatan layanan informasi publik PPID ${village}.`,
+    },
+    "/laporan-ppid": {
+      title: `Laporan PPID ${village}`,
+      description: `Laporan ringkas permohonan informasi, keberatan, dan publikasi PPID ${village}.`,
     },
     "/data-desa": {
       title: `Statistik Data ${village}`,
@@ -2424,18 +3122,13 @@ function statValue(statMap: Map<string, { value: number }>, key: StatKey) {
 
 function toneClass(tone: string) {
   switch (tone) {
-    case "blue":
-      return "bg-blue-50 text-blue-600";
     case "orange":
-      return "bg-orange-50 text-orange-600";
-    case "purple":
-      return "bg-purple-50 text-purple-600";
-    case "red":
-      return "bg-red-50 text-red-500";
     case "yellow":
-      return "bg-amber-50 text-amber-500";
+      return "bg-civic-warning-bg text-civic-warning";
+    case "red":
+      return "bg-civic-danger-bg text-civic-danger";
     default:
-      return "bg-emerald-50 text-emerald-700";
+      return "bg-village-100 text-village-700";
   }
 }
 

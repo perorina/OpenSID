@@ -3,6 +3,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, extname, join, normalize, resolve } from "node:path";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { brotliCompressSync, constants as zlibConstants, gzipSync } from "node:zlib";
+import { Readable } from "node:stream";
 
 const root = dirname(fileURLToPath(import.meta.url));
 loadDotEnv();
@@ -15,6 +17,7 @@ const internalKey = process.env.YMS_INTERNAL_API_KEY || (isProd ? "" : "dev-inte
 const clientDist = join(root, "dist", "client");
 const serverEntry = [join(root, "dist", "server", "entry-server.js"), join(root, "dist", "server", "entry-server.mjs")].find(existsSync) || join(root, "dist", "server", "entry-server.js");
 const initialDataCache = new Map();
+const staticCompressionCache = new Map();
 
 let vite;
 let prodTemplate = "";
@@ -40,12 +43,16 @@ const server = createHttpServer(async (req, res) => {
     }
 
     const url = new URL(req.url, siteUrl);
+    if (/^\/dokumen\/\d+$/.test(url.pathname)) {
+      await proxyDocument(req, res, url);
+      return;
+    }
     if (url.pathname.startsWith("/_bff")) {
       await proxyBff(req, res, url);
       return;
     }
 
-    if (isProd && serveStatic(res, url.pathname)) {
+    if (isProd && serveStatic(req, res, url.pathname)) {
       return;
     }
 
@@ -60,7 +67,7 @@ const server = createHttpServer(async (req, res) => {
       vite.ssrFixStacktrace(error);
     }
     console.error(error);
-    sendHtml(res, 500, "text/plain; charset=utf-8", "Server SSR belum bisa merender halaman.");
+    sendHtml(req, res, 500, "text/plain; charset=utf-8", "Server SSR belum bisa merender halaman.");
   }
 });
 
@@ -73,7 +80,7 @@ async function renderPage(req, res, url) {
     ? prodTemplate
     : await vite.transformIndexHtml(url.pathname, await readFile(join(root, "index.html"), "utf-8"));
   const renderer = isProd ? prodRender : await vite.ssrLoadModule("/src/entry-server.tsx");
-  const initialData = await getInitialData(url.pathname);
+  const initialData = await getInitialData(url);
   const result = renderer.render(url.href, initialData, siteUrl);
 
   const html = template
@@ -88,18 +95,142 @@ async function renderPage(req, res, url) {
   } else {
     res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
   }
-  sendHtml(res, result.status, "text/html; charset=utf-8", html);
+  sendHtml(req, res, result.status, "text/html; charset=utf-8", html);
 }
 
-async function getInitialData(pathname) {
+async function getInitialData(url) {
+  const pathname = url.pathname;
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
   if (pathname === "/dtks" || pathname.startsWith("/admin")) {
     return loadPublicInitialData("private-public-shell", 30_000, 30_000);
+  }
+
+  const publicationRoutes = new Set(["/profil", "/pemerintah-desa", "/struktur-organisasi", "/apbdes", "/perencanaan", "/program", "/produk-hukum", "/data-desa", "/mobil-siaga", "/darurat"]);
+  if (publicationRoutes.has(normalizedPath)) {
+    const year = new Date().getFullYear();
+    const tasks = [
+      loadPublicInitialData("public-shell", 60_000, 120_000),
+      loadCachedInitialData("route:publications", 300_000, 120_000, () => internalGet("/public/publications")),
+    ];
+    if (normalizedPath === "/apbdes") {
+      tasks.push(loadCachedInitialData(`route:budget:${year}`, 300_000, 120_000, () => internalGet(`/public/budget?year=${year}`)));
+    }
+    if (normalizedPath === "/darurat" || normalizedPath === "/mobil-siaga") {
+      tasks.push(loadCachedInitialData("route:emergency", 30_000, 30_000, () => internalGet("/public/emergency")));
+    }
+    const [base, publications, extra] = await Promise.all(tasks);
+    return {
+      ...base,
+      publications,
+      ...(normalizedPath === "/apbdes" ? { budget: extra } : {}),
+      ...(normalizedPath === "/darurat" || normalizedPath === "/mobil-siaga" ? { emergency: extra } : {}),
+    };
+  }
+
+  if (normalizedPath === "/ppid") {
+    const [ringkasan, ppid] = await Promise.all([
+      loadCachedInitialData("route:ppid:ringkasan", 60_000, 120_000, () => internalGet("/ringkasan")),
+      loadCachedInitialData("route:ppid", 300_000, 120_000, () => internalGet("/public/ppid")),
+    ]);
+    return { ringkasan, dtks: ringkasan?.dtks, ppid };
+  }
+
+  if (normalizedPath === "/permohonan-informasi" || normalizedPath === "/keberatan-informasi") {
+    const [base, ppid] = await Promise.all([
+      loadPublicInitialData("public-shell", 60_000, 120_000),
+      loadCachedInitialData("route:ppid", 300_000, 120_000, () => internalGet("/public/ppid")),
+    ]);
+    return { ...base, ppid };
+  }
+
+  if (normalizedPath === "/laporan-ppid") {
+    const [base, ppidReport] = await Promise.all([
+      loadPublicInitialData("public-shell", 60_000, 120_000),
+      loadCachedInitialData("route:ppid:report", 60_000, 60_000, () => internalGet("/public/ppid/report")),
+    ]);
+    return { ...base, ppidReport };
+  }
+
+  if (normalizedPath === "/dip") {
+    const ringkasan = await loadCachedInitialData("route:dip:ringkasan", 60_000, 120_000, () => internalGet("/ringkasan"));
+    const query = url.searchParams.toString();
+    let dip;
+    try {
+      dip = query
+        ? await internalGet(`/public/dip?${query}`)
+        : await loadCachedInitialData("route:dip", 60_000, 120_000, () => internalGet("/public/dip"));
+    } catch {
+      dip = await loadCachedInitialData("route:dip", 60_000, 120_000, () => internalGet("/public/dip"));
+    }
+    return { ringkasan, dtks: ringkasan?.dtks, dip };
+  }
+
+  const detailMatch = normalizedPath.match(/^\/dip\/(\d+)$/);
+  if (detailMatch) {
+    const [ringkasan, dipDetail] = await Promise.all([
+      loadCachedInitialData("route:dip:ringkasan", 60_000, 120_000, () => internalGet("/ringkasan")),
+      loadCachedInitialData(`route:dip:detail:${detailMatch[1]}`, 300_000, 120_000, () => internalGet(`/public/dip/${detailMatch[1]}`)),
+    ]);
+    return { ringkasan, dtks: ringkasan?.dtks, dipDetail };
   }
 
   return loadPublicInitialData("public-shell", 60_000, 120_000);
 }
 
+async function proxyDocument(req, res, url) {
+  if (!internalKey) {
+    sendHtml(req, res, 503, "text/plain; charset=utf-8", "Pratinjau dokumen belum dikonfigurasi.");
+    return;
+  }
+
+  const id = url.pathname.slice("/dokumen/".length);
+  const headers = {
+    Authorization: `Bearer ${internalKey}`,
+    "X-YMS-Request-ID": cryptoRandomId(),
+  };
+  for (const name of ["range", "if-modified-since", "if-none-match"]) {
+    const value = req.headers[name];
+    if (value) headers[name] = Array.isArray(value) ? value.join(", ") : value;
+  }
+
+  let upstream;
+  try {
+    upstream = await fetch(`${apiBase}/public/documents/${id}/content`, {
+      method: req.method === "HEAD" ? "HEAD" : "GET",
+      headers,
+      redirect: "manual",
+    });
+  } catch {
+    sendHtml(req, res, 502, "text/plain; charset=utf-8", "Dokumen belum bisa dihubungi.");
+    return;
+  }
+
+  for (const name of ["accept-ranges", "cache-control", "content-disposition", "content-length", "content-range", "content-type", "etag", "last-modified", "location", "x-content-type-options"]) {
+    const value = upstream.headers.get(name);
+    if (value) res.setHeader(name, value);
+  }
+  res.statusCode = upstream.status;
+  if (req.method === "HEAD" || !upstream.body) {
+    res.end();
+    return;
+  }
+  Readable.fromWeb(upstream.body).pipe(res);
+}
+
 async function loadPublicInitialData(key, freshMs, staleMs) {
+  return loadCachedInitialData(key, freshMs, staleMs, async () => {
+    const [ringkasan, artikel, pembangunan, program, dtks] = await Promise.all([
+      internalGet("/ringkasan"),
+      internalGet("/artikel?limit=6"),
+      internalGet("/pembangunan?limit=6"),
+      internalGet("/program-bantuan?limit=6"),
+      internalGet("/dtks"),
+    ]);
+    return { ringkasan, artikel, pembangunan, program, dtks };
+  });
+}
+
+async function loadCachedInitialData(key, freshMs, staleMs, loader) {
   const now = Date.now();
   const cached = initialDataCache.get(key);
   if (cached && cached.freshUntil > now) {
@@ -110,14 +241,7 @@ async function loadPublicInitialData(key, freshMs, staleMs) {
   }
 
   const load = async () => {
-    const [ringkasan, artikel, pembangunan, program, dtks] = await Promise.all([
-      internalGet("/ringkasan"),
-      internalGet("/artikel?limit=6"),
-      internalGet("/pembangunan?limit=6"),
-      internalGet("/program-bantuan?limit=6"),
-      internalGet("/dtks"),
-    ]);
-    const value = { ringkasan, artikel, pembangunan, program, dtks };
+    const value = await loader();
     initialDataCache.set(key, { value, freshUntil: Date.now() + freshMs, staleUntil: Date.now() + freshMs + staleMs, loading: false });
     return value;
   };
@@ -216,11 +340,27 @@ async function proxyBff(req, res, url) {
     res.setHeader("Set-Cookie", setCookies.map(rewriteCookiePath));
   }
 
+  if (upstream.ok && req.method === "POST" && upstreamPath.startsWith("/admin/")) {
+    if (upstreamPath.startsWith("/admin/ppid")) {
+      for (const key of initialDataCache.keys()) {
+        if (key === "route:ppid" || key === "route:ppid:report" || key === "route:emergency" || key === "route:publications") initialDataCache.delete(key);
+      }
+    }
+    if (upstreamPath.startsWith("/admin/dip")) {
+      for (const key of initialDataCache.keys()) {
+        if (key === "route:dip" || key === "route:publications" || key.startsWith("route:dip:detail:")) initialDataCache.delete(key);
+      }
+    }
+  }
+  if (upstream.ok && req.method === "POST" && (upstreamPath.startsWith("/public/ppid/requests") || upstreamPath.startsWith("/public/ppid/objections"))) {
+    initialDataCache.delete("route:ppid:report");
+  }
+
   res.statusCode = upstream.status;
   res.end(responseBody);
 }
 
-function serveStatic(res, pathname) {
+function serveStatic(req, res, pathname) {
   if (!extname(pathname)) return false;
 
   const requested = normalize(decodeURIComponent(pathname)).replace(/^[/\\]+/, "");
@@ -229,9 +369,11 @@ function serveStatic(res, pathname) {
     return false;
   }
 
-  res.setHeader("Content-Type", contentType(filePath));
+  const type = contentType(filePath);
+  res.setHeader("Content-Type", type);
   res.setHeader("Cache-Control", filePath.includes(`${join("dist", "client", "assets")}`) ? "public, max-age=31536000, immutable" : "public, max-age=3600");
-  res.end(readFileSync(filePath));
+  const body = readFileSync(filePath);
+  sendEncoded(req, res, body, isCompressible(type) ? filePath : undefined);
   return true;
 }
 
@@ -270,10 +412,43 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function sendHtml(res, status, type, body) {
+function sendHtml(req, res, status, type, body) {
   res.statusCode = status;
   res.setHeader("Content-Type", type);
-  res.end(body);
+  sendEncoded(req, res, Buffer.from(body));
+}
+
+function sendEncoded(req, res, body, cacheKey) {
+  if (body.length >= 1024) res.setHeader("Vary", "Accept-Encoding");
+  const encoding = preferredEncoding(req.headers["accept-encoding"], body.length);
+  if (!encoding) {
+    res.setHeader("Content-Length", body.length);
+    res.end(req.method === "HEAD" ? undefined : body);
+    return;
+  }
+
+  res.setHeader("Content-Encoding", encoding);
+  const key = cacheKey ? `${cacheKey}:${encoding}` : "";
+  let encoded = key ? staticCompressionCache.get(key) : undefined;
+  if (!encoded) {
+    encoded = encoding === "br"
+      ? brotliCompressSync(body, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })
+      : gzipSync(body, { level: 6 });
+    if (key) staticCompressionCache.set(key, encoded);
+  }
+  res.setHeader("Content-Length", encoded.length);
+  res.end(req.method === "HEAD" ? undefined : encoded);
+}
+
+function preferredEncoding(acceptEncoding, bodyLength) {
+  if (bodyLength < 1024 || typeof acceptEncoding !== "string") return "";
+  if (/\bbr\b/i.test(acceptEncoding)) return "br";
+  if (/\bgzip\b/i.test(acceptEncoding)) return "gzip";
+  return "";
+}
+
+function isCompressible(type) {
+  return type.startsWith("text/") || type.includes("javascript") || type.includes("json") || type.includes("svg");
 }
 
 function contentType(filePath) {

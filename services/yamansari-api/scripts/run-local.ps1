@@ -4,6 +4,7 @@ param(
     [string] $AllowedOrigins = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
     [string] $OpenSIDBaseUrl = "http://127.0.0.1:8081",
     [string] $InternalApiKey = "dev-internal-key",
+    [switch] $EnableSampleData,
     [switch] $SkipOpenSIDConfig
 )
 
@@ -64,6 +65,12 @@ if (-not $env:YMS_JWT_SECRET) {
 }
 if (-not $env:YMS_COOKIE_SECURE) {
     $env:YMS_COOKIE_SECURE = "false"
+}
+if ($EnableSampleData) {
+    $env:YMS_ENABLE_SAMPLE_DATA = "true"
+    $env:YMS_OPENSID_DOCUMENT_DIR = Join-Path $RepoRoot "desa\upload\dokumen"
+    $env:YMS_PPID_SAMPLE_PDF_DIR = Join-Path $RepoRoot "output\pdf\ppid"
+    $env:YMS_DIP_SAMPLE_PDF_DIR = Join-Path $RepoRoot "output\pdf\ppid\dip"
 }
 
 Write-Host "Starting Yamansari API at http://$($env:YMS_API_ADDR)/api/yms"

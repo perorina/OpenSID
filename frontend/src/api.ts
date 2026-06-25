@@ -82,6 +82,283 @@ export type AdminUser = {
   id_grup: number;
 };
 
+export type PPIDProfile = {
+  supervisorPamongId: number;
+  ppidPamongId: number;
+  serviceOfficerPamongId: number;
+  serviceAddress: string;
+  serviceSchedule: string;
+  phone: string;
+  email: string;
+  feePolicy: string;
+  serviceCommitment: string;
+  responseDays: number;
+  extensionDays: number;
+  isPublished: boolean;
+  isSample: boolean;
+  updatedAt?: string;
+};
+
+export type PPIDOfficial = {
+  id: number;
+  name: string;
+  role: string;
+  position: string;
+  photoUrl: string | null;
+  isFallback: boolean;
+};
+
+export type PPIDDocument = {
+  id: number;
+  title: string;
+  year?: string;
+  category: string;
+  publishedAt?: string;
+  retentionUntil?: string;
+  description?: string;
+  url: string | null;
+  isSample: boolean;
+};
+
+export type PPIDPublicData = {
+  profile: PPIDProfile;
+  officials: PPIDOfficial[];
+  documents: PPIDDocument[];
+  isSample: boolean;
+};
+
+export type PPIDPamong = {
+  id: number;
+  name: string;
+  position: string;
+  photoUrl: string | null;
+  order: number;
+};
+
+export type AdminPPIDPayload = PPIDPublicData & {
+  pamongOptions: PPIDPamong[];
+  canEdit: boolean;
+  sampleAvailable: boolean;
+  openSidAdminUrl: string;
+};
+
+export type AdminPPIDSeedResult = {
+  profileSeeded: boolean;
+  documentsCreated: number;
+  documentsUpdated: number;
+};
+
+export type DIPCategory = {
+  code: number;
+  slug: string;
+  label: string;
+};
+
+export type DIPMetadata = {
+  documentId: number;
+  publicationType: string;
+  summary: string;
+  controllingUnit: string;
+  responsibleOfficial: string;
+  publisher: string;
+  createdDate: string;
+  createdPlace: string;
+  updateFrequency: string;
+  isListed: boolean;
+  isSample: boolean;
+  sortOrder: number;
+  version: number;
+};
+
+export type DIPEntry = {
+  documentId: number;
+  title: string;
+  publicationType: string;
+  category: DIPCategory;
+  year?: string;
+  summary: string;
+  controllingUnit: string;
+  responsibleOfficial: string;
+  publisher: string;
+  createdDate: string;
+  createdPlace: string;
+  updateFrequency: string;
+  format: string;
+  publishedAt?: string;
+  retentionUntil?: string;
+  retentionLabel: string;
+  updatedAt?: string;
+  viewUrl: string;
+  isSample: boolean;
+};
+
+export type DIPListPayload = {
+  items: DIPEntry[];
+  categories: Array<DIPCategory & { count: number }>;
+  years: string[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  isSample: boolean;
+};
+
+export type AdminDIPDocument = {
+  entry: DIPEntry;
+  metadata: DIPMetadata;
+  complete: boolean;
+};
+
+export type AdminDIPPayload = {
+  documents: AdminDIPDocument[];
+  completeCount: number;
+  incompleteCount: number;
+  canEdit: boolean;
+  sampleAvailable: boolean;
+  openSidAdminUrl: string;
+};
+
+export type AdminDIPSeedResult = {
+  documentsCreated: number;
+  documentsUpdated: number;
+  metadataUpserted: number;
+  totalDocuments: number;
+};
+
+export type PublicationCatalog = {
+  documents: DIPEntry[];
+  coverage: Array<{ key: string; label: string; available: number; required: boolean }>;
+  completed: number;
+  required: number;
+  completeness: number;
+  isSample: boolean;
+};
+
+export type BudgetData = {
+  year: string;
+  totalAnggaran: number;
+  totalRealisasi: number;
+  items: Array<{ kode: string; uraian: string; anggaran: number; realisasi: number }>;
+};
+
+export type InformationRequest = {
+  id: number;
+  ticketCode: string;
+  applicantName: string;
+  identityType?: string;
+  identityNumber?: string;
+  email?: string;
+  phone: string;
+  address?: string;
+  informationRequested: string;
+  purpose: string;
+  deliveryMethod: string;
+  status: string;
+  statusLabel: string;
+  dueAt: string;
+  extendedDueAt?: string;
+  responseSummary?: string;
+  rejectionReason?: string;
+  responseDocumentId?: number;
+  responseDocumentUrl?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  isSample: boolean;
+  isOverdue: boolean;
+};
+
+export type InformationObjection = {
+  id: number;
+  requestId?: number;
+  requestTicket?: string;
+  ticketCode: string;
+  applicantName: string;
+  email?: string;
+  phone: string;
+  reasonCode: string;
+  reasonLabel: string;
+  detail: string;
+  status: string;
+  statusLabel: string;
+  dueAt: string;
+  response?: string;
+  decidedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  isSample: boolean;
+  isOverdue: boolean;
+};
+
+export type TrackingCredential = {
+  ticketCode: string;
+  trackingToken: string;
+  dueAt: string;
+  status: string;
+};
+
+export type PPIDReport = {
+  year: number;
+  requestsTotal: number;
+  requestsByStatus: Record<string, number>;
+  objectionsTotal: number;
+  objectionsByStatus: Record<string, number>;
+  overdueRequests: number;
+  overdueObjections: number;
+  averageResponseDays: number;
+  dipPublished: number;
+  dipVersionTotal: number;
+  emergencies: number;
+  monthlyRequests: number[];
+  generatedAt: string;
+};
+
+export type Emergency = {
+  id: number;
+  title: string;
+  severity: "info" | "warning" | "critical";
+  status: "draft" | "published" | "resolved";
+  statusLabel: string;
+  occurredAt: string;
+  location: string;
+  affectedArea: string;
+  instructions: string;
+  evacuationRoute?: string;
+  safePlace?: string;
+  aidChannel?: string;
+  actionTaken?: string;
+  contactName?: string;
+  contactPhone?: string;
+  publishedAt?: string;
+  resolvedAt?: string;
+  updatedAt: string;
+  isSample: boolean;
+};
+
+export type EmergencyData = {
+  items: Emergency[];
+  contacts: Array<{ id: number; kind: string; label: string; value: string; description?: string }>;
+  isSample: boolean;
+};
+
+export type PPIDAuditEntry = {
+  id: number;
+  actor: string;
+  entityType: string;
+  entityId?: number;
+  action: string;
+  detail?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type AdminPPIDServices = {
+  requests: InformationRequest[];
+  objections: InformationObjection[];
+  emergencies: Emergency[];
+  audit: PPIDAuditEntry[];
+  report: PPIDReport;
+  sla: { requestsOverdue: number; objectionsOverdue: number; dueSoon: number };
+  canEdit: boolean;
+  sampleAvailable: boolean;
+};
+
 export type AdminDTKSItem = {
   id: number;
   isDraft: boolean;
@@ -158,6 +435,13 @@ export type PublicInitialData = {
   pembangunan?: Pembangunan[];
   program?: ProgramBantuan[];
   dtks?: Dtks;
+  ppid?: PPIDPublicData;
+  dip?: DIPListPayload;
+  dipDetail?: DIPEntry;
+  publications?: PublicationCatalog;
+  budget?: BudgetData;
+  emergency?: EmergencyData;
+  ppidReport?: PPIDReport;
 };
 
 export type MandiriUser = {

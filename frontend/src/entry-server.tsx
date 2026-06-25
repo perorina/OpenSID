@@ -15,7 +15,7 @@ export function render(url: string, initialData: PublicInitialData = {}, siteUrl
   const pathname = new URL(url, siteUrl).pathname;
   const initialRoute = routeFromPathname(pathname);
   const villageName = initialData.ringkasan?.profil.nama ?? "Yamansari";
-  const meta = routeMeta(pathname, villageName, siteUrl);
+  const meta = routeMeta(pathname, villageName, siteUrl, initialData);
   const appHtml = renderToString(<App initialData={initialData} initialRoute={initialRoute} />);
 
   return {
@@ -27,11 +27,15 @@ export function render(url: string, initialData: PublicInitialData = {}, siteUrl
   };
 }
 
-function routeMeta(pathname: string, villageName: string, siteUrl: string) {
+function routeMeta(pathname: string, villageName: string, siteUrl: string, initialData: PublicInitialData) {
   const path = pathname.replace(/\/+$/, "") || "/";
   const canonical = `${siteUrl.replace(/\/+$/, "")}${path}`;
   const village = `Desa ${villageName}`;
   const isPrivate = path === "/dtks" || path.startsWith("/admin");
+  const isPPIDAdmin = path === "/admin/ppid";
+  const isPPIDServicesAdmin = path === "/admin/ppid-layanan";
+  const isDIPAdmin = path === "/admin/dip";
+  const isDIPDetail = /^\/dip\/\d+$/.test(path);
   const publicMeta: Record<string, { title: string; description: string }> = {
     "/": {
       title: `${village} Digital`,
@@ -46,6 +50,9 @@ function routeMeta(pathname: string, villageName: string, siteUrl: string) {
     "/produk-hukum": { title: `Produk Hukum ${village}`, description: `Peraturan desa, keputusan kepala desa, dan dokumen hukum ${village}.` },
     "/ppid": { title: `PPID ${village}`, description: `Pejabat Pengelola Informasi dan Dokumentasi serta layanan informasi publik ${village}.` },
     "/dip": { title: `Daftar Informasi Publik ${village}`, description: `Daftar Informasi Publik yang tersedia untuk warga dan masyarakat ${village}.` },
+    "/permohonan-informasi": { title: `Permohonan Informasi ${village}`, description: `Form permohonan informasi publik dan pelacakan status PPID ${village}.` },
+    "/keberatan-informasi": { title: `Keberatan Informasi ${village}`, description: `Form keberatan layanan informasi publik PPID ${village}.` },
+    "/laporan-ppid": { title: `Laporan PPID ${village}`, description: `Laporan ringkas permohonan informasi, keberatan, dan publikasi PPID ${village}.` },
     "/data-desa": { title: `Statistik Data ${village}`, description: `Statistik kependudukan dan data agregat publik ${village}.` },
     "/berita": { title: `Berita ${village}`, description: `Berita terbaru, agenda, dan informasi kegiatan ${village}.` },
     "/pengumuman": { title: `Pengumuman ${village}`, description: `Pengumuman resmi dan informasi penting dari pemerintah ${village}.` },
@@ -56,16 +63,24 @@ function routeMeta(pathname: string, villageName: string, siteUrl: string) {
 
   const selected = isPrivate
     ? {
-        title: `Dashboard DTKS ${villageName}`,
-        description: "Dashboard agregat DTKS Desa Yamansari. Halaman ini tidak untuk diindeks mesin pencari.",
+        title: `${isPPIDAdmin ? "Admin PPID" : isPPIDServicesAdmin ? "Admin Layanan PPID" : isDIPAdmin ? "Admin DIP" : "Dashboard DTKS"} ${villageName}`,
+        description: isPPIDAdmin
+          ? "Pengaturan privat profil dan standar layanan PPID Desa Yamansari."
+          : isPPIDServicesAdmin
+            ? "Pengelolaan privat permohonan informasi, keberatan, darurat, laporan, dan audit PPID Desa Yamansari."
+          : isDIPAdmin
+            ? "Pengaturan privat metadata Daftar Informasi Publik Desa Yamansari."
+          : "Dashboard agregat DTKS Desa Yamansari. Halaman ini tidak untuk diindeks mesin pencari.",
       }
+    : isDIPDetail && initialData.dipDetail
+      ? { title: `${initialData.dipDetail.title} | ${village}`, description: initialData.dipDetail.summary }
     : publicMeta[path] ?? publicMeta["/"];
 
   return {
     canonical,
     description: selected.description,
     robots: isPrivate ? "noindex, nofollow, noarchive, noimageindex" : "index, follow",
-    status: path.startsWith("/_bff") ? 404 : 200,
+    status: path.startsWith("/_bff") || (isDIPDetail && !initialData.dipDetail) ? 404 : 200,
     title: selected.title,
   };
 }

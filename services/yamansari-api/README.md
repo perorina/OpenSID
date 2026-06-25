@@ -17,6 +17,14 @@ Untuk setup lokal repo ini, jalankan helper agar service memakai `desa/config/da
 .\scripts\run-local.ps1
 ```
 
+Untuk mengaktifkan seed PPID contoh di environment lokal:
+
+```powershell
+.\scripts\run-local.ps1 -EnableSampleData
+```
+
+Flag tersebut mengaktifkan `YMS_ENABLE_SAMPLE_DATA=true`, memakai PDF dari `output/pdf/ppid/`, dan menyalin berkas ke penyimpanan dokumen OpenSID. Jangan aktifkan mode sample di produksi.
+
 Untuk server atau environment non-lokal, set `YMS_DB_DSN` dari secret manager:
 
 ```powershell
@@ -45,7 +53,28 @@ $env:YMS_INTERNAL_API_KEY = "isi-sama-dengan-api"
 - `GET /api/yms/public/programs`
 - `GET /api/yms/public/legal-products`
 - `GET /api/yms/public/ppid`
+- `POST /api/yms/public/ppid/requests`
+- `POST /api/yms/public/ppid/requests/track`
+- `POST /api/yms/public/ppid/objections`
+- `POST /api/yms/public/ppid/objections/track`
+- `GET /api/yms/public/ppid/report`
+- `GET /api/yms/admin/ppid`
+- `POST /api/yms/admin/ppid`
+- `POST /api/yms/admin/ppid/seed-sample`
+- `GET /api/yms/admin/ppid/services`
+- `GET /api/yms/admin/ppid/report.csv`
+- `POST /api/yms/admin/ppid/seed-workflow`
+- `POST /api/yms/admin/ppid/requests/{id}`
+- `POST /api/yms/admin/ppid/objections/{id}`
+- `POST /api/yms/admin/ppid/emergencies`
+- `POST /api/yms/admin/ppid/emergencies/{id}`
 - `GET /api/yms/public/dip`
+- `GET /api/yms/public/publications`
+- `GET /api/yms/public/dip/{id}`
+- `GET|HEAD /api/yms/public/documents/{id}/content`
+- `GET /api/yms/admin/dip`
+- `POST /api/yms/admin/dip/{id}`
+- `POST /api/yms/admin/dip/seed-sample`
 - `GET /api/yms/public/stats`
 - `GET /api/yms/public/articles`
 - `GET /api/yms/public/announcements`
@@ -69,3 +98,5 @@ $env:YMS_INTERNAL_API_KEY = "isi-sama-dengan-api"
 ## Cache
 
 Public API memakai in-memory TTL cache dengan stale fallback dan `singleflight`. Endpoint mandiri selalu `Cache-Control: no-store`.
+
+Profil PPID memakai cache lima menit dan cache tersebut dihapus setelah penyimpanan atau seed dari admin. Route admin membutuhkan session admin OpenSID, token CSRF, dan akses modul `informasi-publik` minimal baca `1` atau ubah `3`.

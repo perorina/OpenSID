@@ -365,28 +365,9 @@ func (a *App) loadPlanning(ctx context.Context) (any, error) {
 }
 
 func (a *App) loadEmergency(ctx context.Context) (any, error) {
-	items := []map[string]any{}
-	if a.schema.HasTable(ctx, "yms_public_notices") {
-		rows, err := a.db.QueryContext(ctx, `SELECT id, kind, title, IFNULL(body, ''), IFNULL(CAST(starts_at AS CHAR), ''), IFNULL(CAST(ends_at AS CHAR), '')
-FROM yms_public_notices
-WHERE (config_id = ? OR config_id IS NULL) AND is_active = 1 AND (starts_at IS NULL OR starts_at <= NOW()) AND (ends_at IS NULL OR ends_at >= NOW())
-ORDER BY created_at DESC, id DESC LIMIT 8`, a.cfg.ConfigID)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var id int64
-			var kind, title, body, startsAt, endsAt string
-			if err := rows.Scan(&id, &kind, &title, &body, &startsAt, &endsAt); err != nil {
-				return nil, err
-			}
-			items = append(items, map[string]any{"id": id, "kind": kind, "title": title, "body": nilString(body), "startsAt": nilString(startsAt), "endsAt": nilString(endsAt)})
-		}
-		if err := rows.Err(); err != nil {
-			return nil, err
-		}
+	items, err := a.loadEmergencyRecords(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	contacts := []map[string]any{}
@@ -413,7 +394,11 @@ ORDER BY sort_order, id LIMIT 24`, a.cfg.ConfigID)
 		}
 	}
 
-	return map[string]any{"items": items, "contacts": contacts}, nil
+	isSample := false
+	for _, item := range items {
+		isSample = isSample || item.IsSample
+	}
+	return map[string]any{"items": items, "contacts": contacts, "isSample": isSample}, nil
 }
 
 func (a *App) loadDocuments(ctx context.Context, limit int) (any, error) {
